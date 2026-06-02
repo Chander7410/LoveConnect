@@ -2033,6 +2033,34 @@ textarea.form-control:focus {
   padding: clamp(1.4rem, 4vw, 2.4rem);
 }
 
+.api-config-panel {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.85rem 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(20, 23, 39, 0.08);
+  border-radius: var(--lc-radius-md);
+  background: rgba(255,255,255,0.62);
+}
+
+.api-config-panel label {
+  color: var(--lc-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.api-config-panel > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+}
+
+.api-config-panel .btn {
+  min-width: 74px;
+  font-weight: 850;
+}
+
 .link-button {
   padding: 0;
   color: var(--lc-primary);

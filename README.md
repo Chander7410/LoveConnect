@@ -126,6 +126,8 @@ VITE_API_URL=https://your-backend-domain.com/api
 
 Do not use `localhost` for deployed frontend users. In a browser, `localhost` means the user's own computer.
 
+If `VITE_API_URL` is missing, the login page includes a temporary `Backend API URL` field for testing. Production deployments should still set the environment variable in Vercel.
+
 3. Start the UI:
 
 ```bash

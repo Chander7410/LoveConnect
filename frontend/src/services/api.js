@@ -1,8 +1,30 @@
 import axios from 'axios';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const normalizeApiUrl = (url) => {
+  if (!url) return '';
+  const trimmed = url.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const isLocalFrontend = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('loveconnect_api_url') : '';
+const fallbackApiUrl = isLocalFrontend ? 'http://localhost:8080/api' : '';
+
+export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
-export const apiUnavailableMessage = `Backend API is not reachable at ${API_BASE_URL}. Set VITE_API_URL to your live backend URL and make sure the Spring Boot API is running.`;
+export const apiUnavailableMessage = API_BASE_URL
+  ? `Backend API is not reachable at ${API_BASE_URL}. Make sure the Spring Boot API is running and CORS allows this frontend domain.`
+  : 'Backend API URL is not configured. Set VITE_API_URL in deployment settings, or enter a backend URL on this page.';
+
+export const saveRuntimeApiUrl = (url) => {
+  const normalized = normalizeApiUrl(url);
+  if (normalized) {
+    localStorage.setItem('loveconnect_api_url', normalized);
+  } else {
+    localStorage.removeItem('loveconnect_api_url');
+  }
+  window.location.reload();
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL
