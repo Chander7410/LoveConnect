@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ProfileCard from '../components/ProfileCard.jsx';
-import api, { clearSession } from '../services/api.js';
+import api, { apiUnavailableMessage, clearSession } from '../services/api.js';
 
 const genderOptions = [
   { value: '', label: 'Any gender', accent: 'All' },
@@ -26,7 +26,7 @@ export default function SearchPage() {
       setMatches(data);
     } catch (err) {
       if (!err.response) {
-        setError('Backend API is not reachable. Make sure Spring Boot is running on http://localhost:8080.');
+        setError(apiUnavailableMessage);
       } else if (err.response.status === 401 || err.response.status === 403) {
         clearSession();
         setError('Please login again before searching matches.');

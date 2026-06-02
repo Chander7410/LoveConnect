@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api, { saveSession } from '../services/api.js';
+import api, { apiUnavailableMessage, saveSession } from '../services/api.js';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function RegisterPage() {
       navigate('/profile');
     } catch (err) {
       if (!err.response) {
-        setError('Backend API is not running on http://localhost:8080. Start the Spring Boot server, then try registration again.');
+        setError(apiUnavailableMessage);
         return;
       }
       setError(err.response?.data?.message || 'Registration failed. Please check the entered details.');

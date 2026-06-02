@@ -112,7 +112,21 @@ app.notification-service.url=http://localhost:8081/api/micro/notifications/deliv
 ## Frontend Setup
 
 1. Install Node.js 20+.
-2. Start the UI:
+2. Configure the backend API URL. For local development, create `frontend/.env`:
+
+```bash
+VITE_API_URL=http://localhost:8080/api
+```
+
+For Vercel or another hosted frontend, set `VITE_API_URL` to your public backend URL, for example:
+
+```bash
+VITE_API_URL=https://your-backend-domain.com/api
+```
+
+Do not use `localhost` for deployed frontend users. In a browser, `localhost` means the user's own computer.
+
+3. Start the UI:
 
 ```bash
 cd frontend
@@ -120,10 +134,30 @@ npm install
 npm run dev
 ```
 
-3. Open:
+4. Open:
 
 ```text
 http://localhost:5173
+```
+
+## Deployed Backend Requirement
+
+The React frontend cannot run the Spring Boot API by itself. When you deploy the frontend to Vercel, you must deploy the backend separately, for example to Render, Railway, Fly.io, AWS, Azure, or a VPS.
+
+After backend deployment:
+
+1. Copy the backend public URL.
+2. In Vercel Project Settings, add:
+
+```text
+VITE_API_URL=https://your-backend-domain.com/api
+```
+
+3. Redeploy the Vercel frontend.
+4. Add your Vercel domain to backend CORS:
+
+```properties
+app.cors.allowed-origins=https://your-vercel-domain.vercel.app,http://localhost:5173,http://127.0.0.1:5173
 ```
 
 ## Production Notes

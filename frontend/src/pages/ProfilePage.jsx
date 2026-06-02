@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api.js';
-import { clearSession, mediaUrl } from '../services/api.js';
+import api, { apiUnavailableMessage, clearSession, mediaUrl } from '../services/api.js';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -48,7 +47,7 @@ export default function ProfilePage() {
       }, 800);
     } catch (err) {
       if (!err.response) {
-        setError('Backend API is not reachable. Make sure Spring Boot is running on http://localhost:8080.');
+        setError(apiUnavailableMessage);
       } else if (isAuthError(err)) {
         clearSession();
         setError('Your login session expired. Please register or login again before saving your profile.');

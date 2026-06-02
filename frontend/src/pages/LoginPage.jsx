@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api, { saveSession } from '../services/api.js';
+import api, { apiUnavailableMessage, saveSession } from '../services/api.js';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function LoginPage() {
       navigate('/search');
     } catch (err) {
       if (!err.response) {
-        setError('Backend API is not running on http://localhost:8080. Start the Spring Boot server, then try login again.');
+        setError(apiUnavailableMessage);
         return;
       }
       setError(err.response?.data?.message || 'Login failed');

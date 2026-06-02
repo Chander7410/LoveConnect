@@ -2,6 +2,7 @@ import axios from 'axios';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+export const apiUnavailableMessage = `Backend API is not reachable at ${API_BASE_URL}. Set VITE_API_URL to your live backend URL and make sure the Spring Boot API is running.`;
 
 const api = axios.create({
   baseURL: API_BASE_URL
