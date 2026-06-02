@@ -1,0 +1,16 @@
+# Java / Maven
+backend/target/
+notification-service/target/
+
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
+
+# Runtime data
+backend/uploads/
+backend/data/
+
+# Local config and logs
+.env
+*.log
+*.err

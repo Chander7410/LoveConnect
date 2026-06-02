@@ -1,0 +1,107 @@
+:root {
+  --rose: #d6336c;
+  --ink: #18212f;
+  --muted: #6c757d;
+  --paper: #ffffff;
+  --wash: #f6f8fb;
+}
+
+body {
+  color: var(--ink);
+  background: var(--wash);
+}
+
+.app-shell {
+  min-height: calc(100vh - 65px);
+}
+
+.nav-link {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.text-rose { color: var(--rose); }
+.btn-rose {
+  background: var(--rose);
+  border-color: var(--rose);
+  color: #fff;
+}
+.btn-rose:hover { background: #b72558; border-color: #b72558; color: #fff; }
+
+.home-hero {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.82) 48%, rgba(255,255,255,.28) 100%),
+    url('https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1600&q=80') center/cover;
+}
+.min-vh-75 { min-height: 75vh; }
+.home-hero h1 { font-size: clamp(3rem, 8vw, 6rem); font-weight: 800; letter-spacing: 0; }
+.eyebrow { text-transform: uppercase; font-size: .78rem; font-weight: 800; color: var(--rose); }
+
+.surface, .profile-card, .metric {
+  background: var(--paper);
+  border: 1px solid #e8edf2;
+  border-radius: 8px;
+  box-shadow: 0 10px 35px rgba(24, 33, 47, .05);
+}
+.narrow { max-width: 520px; }
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.profile-card { overflow: hidden; }
+.profile-photo {
+  min-height: 280px;
+  background: #edf1f5 center/cover;
+  position: relative;
+}
+.profile-photo span {
+  position: absolute;
+  left: .75rem;
+  bottom: .75rem;
+  background: rgba(255,255,255,.92);
+  border-radius: 999px;
+  padding: .3rem .65rem;
+  font-size: .85rem;
+  font-weight: 700;
+}
+.interest-chip {
+  background: #eef7f3;
+  color: #17694d;
+  border-radius: 999px;
+  padding: .22rem .55rem;
+  font-size: .78rem;
+  font-weight: 700;
+}
+.status-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #b8c1cc;
+}
+.status-dot.online { background: #20c997; }
+.avatar-preview {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #edf1f5 center/cover;
+}
+.chat-window {
+  height: 420px;
+  overflow-y: auto;
+}
+.message-row {
+  border-bottom: 1px solid #edf1f5;
+  padding: .65rem 0;
+}
+.metric {
+  padding: 1rem;
+}
+.metric span {
+  display: block;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+.metric strong {
+  font-size: 2rem;
+}

@@ -1,0 +1,65 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: loveconnect-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Roshan@321
+      MYSQL_DATABASE: loveconnect
+    ports:
+      - "3308:3306"
+    volumes:
+      - loveconnect-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pRoshan@321"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  notification-service:
+    build:
+      context: ./notification-service
+    container_name: loveconnect-notification-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: loveconnect-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      notification-service:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/loveconnect?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Roshan@321
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      APP_NOTIFICATION_SERVICE_URL: http://notification-service:8081/api/micro/notifications/deliver
+      APP_UPLOAD_DIR: /app/uploads
+    ports:
+      - "8080:8080"
+    volumes:
+      - loveconnect-uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080/api
+    container_name: loveconnect-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "5173:80"
+
+volumes:
+  loveconnect-mysql-data:
+  loveconnect-uploads:
