@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api, { API_BASE_URL, apiUnavailableMessage, saveRuntimeApiUrl, saveSession } from '../services/api.js';
+import api, { apiUnavailableMessage, saveSession } from '../services/api.js';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -8,7 +8,6 @@ export default function LoginPage() {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [resetForm, setResetForm] = useState({ token: '', newPassword: '' });
-  const [apiUrl, setApiUrl] = useState(API_BASE_URL);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -59,29 +58,11 @@ export default function LoginPage() {
     }
   };
 
-  const saveBackendUrl = (event) => {
-    event.preventDefault();
-    saveRuntimeApiUrl(apiUrl);
-  };
-
   return (
     <div className="container auth-shell py-5">
       <div className="auth-card surface slide-up">
       <p className="eyebrow">Secure access</p>
       <h2>Welcome back</h2>
-      <form className="api-config-panel" onSubmit={saveBackendUrl}>
-        <label htmlFor="apiUrl">Backend API URL</label>
-        <div>
-          <input
-            id="apiUrl"
-            className="form-control"
-            placeholder="https://your-backend-domain.com/api"
-            value={apiUrl}
-            onChange={(event) => setApiUrl(event.target.value)}
-          />
-          <button className="btn btn-outline-dark" type="submit">Save</button>
-        </div>
-      </form>
       <form onSubmit={submit}>
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
