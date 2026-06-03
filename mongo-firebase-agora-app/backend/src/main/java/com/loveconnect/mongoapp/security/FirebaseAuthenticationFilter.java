@@ -29,6 +29,9 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
         var path = request.getRequestURI();
+        if ("/".equals(path)) {
+            return true;
+        }
         return tokenService.publicPaths().stream().anyMatch(path::startsWith);
     }
 
