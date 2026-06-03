@@ -1,0 +1,535 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #202235;
+  background: #f6eef8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(255, 93, 143, 0.18), rgba(87, 125, 255, 0.18)),
+    #f8f4fb;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.shell {
+  width: min(1500px, calc(100% - 32px));
+  margin: 18px auto 48px;
+}
+
+.topbar,
+.panel,
+.chatPanel,
+.loginCard,
+.loginArt,
+.profilePreview,
+.heroProfile {
+  border: 1px solid rgba(32, 34, 53, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 60px rgba(71, 55, 92, 0.14);
+  backdrop-filter: blur(18px);
+}
+
+.topbar {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-radius: 44px;
+  padding: 14px 22px;
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  color: #ff4f86;
+  font-size: 1.35rem;
+  white-space: nowrap;
+}
+
+.brand.large {
+  font-size: 1.75rem;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tab,
+.iconButton,
+.primary,
+.secondary,
+.danger {
+  min-height: 44px;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+  border-radius: 999px;
+}
+
+.tab {
+  padding: 0 18px;
+  color: #2d3046;
+  background: transparent;
+}
+
+.tab.active {
+  color: #ff4f86;
+  background: rgba(255, 79, 134, 0.12);
+}
+
+.iconButton {
+  width: 46px;
+  color: #2d3046;
+  border: 1px solid rgba(32, 34, 53, 0.12);
+  background: #fff;
+}
+
+.primary,
+.secondary,
+.danger {
+  padding: 0 20px;
+}
+
+.primary {
+  color: #fff;
+  background: linear-gradient(135deg, #ff4f86, #ff7a8d);
+}
+
+.secondary {
+  color: #202235;
+  background: #eef2ff;
+}
+
+.danger {
+  color: #fff;
+  background: #e84855;
+}
+
+.login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(320px, 560px) 1fr;
+  gap: 24px;
+  align-items: center;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.loginCard,
+.loginArt,
+.panel,
+.chatPanel,
+.profilePreview,
+.heroProfile {
+  border-radius: 28px;
+  padding: 28px;
+}
+
+.loginCard h1 {
+  font-size: clamp(2rem, 4vw, 4.4rem);
+  line-height: 1;
+  margin: 28px 0 16px;
+  max-width: 10ch;
+}
+
+.loginArt {
+  min-height: 620px;
+  display: grid;
+  align-content: end;
+  gap: 16px;
+  background:
+    linear-gradient(rgba(20, 22, 35, 0.22), rgba(20, 22, 35, 0.34)),
+    url("https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1400&q=80") center/cover;
+  color: #fff;
+}
+
+.metric {
+  width: min(320px, 100%);
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.metric strong {
+  display: block;
+  font-size: 1.5rem;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #383b52;
+  font-weight: 800;
+}
+
+input,
+textarea {
+  width: 100%;
+  min-height: 54px;
+  border: 1px solid rgba(32, 34, 53, 0.14);
+  border-radius: 18px;
+  padding: 0 16px;
+  color: #202235;
+  background: rgba(255, 255, 255, 0.94);
+  outline: none;
+}
+
+textarea {
+  min-height: 132px;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #ff4f86;
+  box-shadow: 0 0 0 4px rgba(255, 79, 134, 0.14);
+}
+
+.inputIcon {
+  position: relative;
+}
+
+.inputIcon svg {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ff4f86;
+}
+
+.inputIcon input {
+  padding-left: 46px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.profileList,
+.history {
+  display: grid;
+  gap: 10px;
+}
+
+.person {
+  width: 100%;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 20px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.person.selected {
+  border-color: #ff6f98;
+  background: #fff;
+}
+
+.person img {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: #ffe8f0;
+}
+
+.person span,
+.person strong,
+.person small {
+  display: block;
+  min-width: 0;
+}
+
+.person small,
+.muted {
+  color: #687086;
+}
+
+.heroProfile {
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: minmax(280px, 42%) 1fr;
+  gap: 34px;
+  align-items: center;
+}
+
+.heroProfile > img,
+.profilePreview img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+.heroProfile h1 {
+  font-size: clamp(2.5rem, 7vw, 6.5rem);
+  line-height: 0.95;
+  margin: 10px 0 18px;
+}
+
+.eyebrow {
+  color: #ff4f86;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.chatLayout,
+.profileEditor {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.sidebar h3 {
+  margin-top: 28px;
+}
+
+.chatPanel {
+  min-height: 680px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 16px;
+}
+
+.chatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.callButtons,
+.callToolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.messages {
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 24px;
+  background: rgba(246, 238, 248, 0.74);
+}
+
+.bubble {
+  max-width: min(70%, 620px);
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(32, 34, 53, 0.08);
+}
+
+.bubble.mine {
+  align-self: flex-end;
+  color: #fff;
+  background: #ff4f86;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+.callStage {
+  border-radius: 24px;
+  padding: 16px;
+  background: #202235;
+  color: #fff;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.callStage .muted {
+  color: #c8ccda;
+  grid-column: 1 / -1;
+}
+
+.videoTile {
+  min-height: 220px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #111423;
+  color: #c8ccda;
+}
+
+.videoTile div {
+  width: 100%;
+  height: 100%;
+}
+
+.callToolbar {
+  grid-column: 1 / -1;
+  justify-content: center;
+}
+
+.historyItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.profileEditor {
+  align-items: start;
+}
+
+.profilePreview {
+  text-align: center;
+}
+
+.notice,
+.error {
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.notice {
+  background: rgba(87, 125, 255, 0.12);
+  color: #36436f;
+}
+
+.error {
+  background: rgba(232, 72, 85, 0.12);
+  color: #a32e39;
+}
+
+.devBox {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(32, 34, 53, 0.05);
+}
+
+.floatingHint {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  color: #fff;
+  background: #202235;
+  box-shadow: 0 12px 30px rgba(32, 34, 53, 0.24);
+}
+
+@media (max-width: 940px) {
+  .login,
+  .grid,
+  .chatLayout,
+  .profileEditor,
+  .heroProfile {
+    grid-template-columns: 1fr;
+  }
+
+  .login {
+    padding: 20px 0;
+  }
+
+  .loginArt {
+    min-height: 360px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    border-radius: 28px;
+    flex-direction: column;
+  }
+
+  .tabs {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .shell {
+    width: min(100% - 20px, 1500px);
+  }
+
+  .loginCard,
+  .loginArt,
+  .panel,
+  .chatPanel,
+  .profilePreview,
+  .heroProfile {
+    border-radius: 20px;
+    padding: 18px;
+  }
+
+  .tab span {
+    display: none;
+  }
+
+  .heroProfile h1 {
+    font-size: 3rem;
+  }
+
+  .composer,
+  .callStage {
+    grid-template-columns: 1fr;
+  }
+
+  .floatingHint {
+    position: static;
+    margin-top: 20px;
+    border-radius: 18px;
+  }
+}

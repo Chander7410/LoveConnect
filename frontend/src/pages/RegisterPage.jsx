@@ -1,20 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api, { API_BASE_URL, apiUnavailableMessage, saveRuntimeApiUrl, saveSession } from '../services/api.js';
+import api, { API_BASE_URL, apiUnavailableMessage, saveSession } from '../services/api.js';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', mobileNumber: '', gender: 'FEMALE', age: 18, location: '', password: '' });
-  const [apiUrl, setApiUrl] = useState(API_BASE_URL);
   const [error, setError] = useState('');
 
   const change = (key, value) => setForm({ ...form, [key]: value });
-
-  const saveBackendUrl = (event) => {
-    event.preventDefault();
-    saveRuntimeApiUrl(apiUrl);
-  };
-
   const submit = async (event) => {
     event.preventDefault();
     setError('');
@@ -45,19 +38,6 @@ export default function RegisterPage() {
         <div className="col-lg-8">
           <p className="eyebrow">Premium onboarding</p>
           <h2>Create your profile</h2>
-          <form className="api-config-panel mb-3" onSubmit={saveBackendUrl}>
-            <label htmlFor="registerApiUrl">Backend API URL</label>
-            <div>
-              <input
-                id="registerApiUrl"
-                className="form-control"
-                placeholder="https://your-backend-domain.com/api"
-                value={apiUrl}
-                onChange={(event) => setApiUrl(event.target.value)}
-              />
-              <button className="btn btn-outline-dark" type="submit">Save</button>
-            </div>
-          </form>
           <form className="surface p-4" onSubmit={submit}>
             {error && <div className="alert alert-danger">{error}</div>}
             <div className="row g-3">
