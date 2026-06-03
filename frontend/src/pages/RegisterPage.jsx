@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api, { apiUnavailableMessage, saveSession } from '../services/api.js';
+import api, { API_BASE_URL, apiUnavailableMessage, saveRuntimeApiUrl, saveSession } from '../services/api.js';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', mobileNumber: '', gender: 'FEMALE', age: 18, location: '', password: '' });
+  const [apiUrl, setApiUrl] = useState(API_BASE_URL);
   const [error, setError] = useState('');
 
   const change = (key, value) => setForm({ ...form, [key]: value });
+
+  const saveBackendUrl = (event) => {
+    event.preventDefault();
+    saveRuntimeApiUrl(apiUrl);
+  };
+
   const submit = async (event) => {
     event.preventDefault();
     setError('');
+    if (!API_BASE_URL) {
+      setError(apiUnavailableMessage);
+      return;
+    }
     try {
       const { data } = await api.post('/auth/register', { ...form, age: Number(form.age) });
       saveSession(data, true);
@@ -20,7 +31,11 @@ export default function RegisterPage() {
         setError(apiUnavailableMessage);
         return;
       }
-      setError(err.response?.data?.message || 'Registration failed. Please check the entered details.');
+      if (err.response.status === 404 || err.response.status === 405) {
+        setError(`Backend API is not configured correctly. Current API URL is ${API_BASE_URL || 'empty'}, but registration is reaching a static frontend route. Set VITE_API_URL to your live Spring Boot backend /api URL.`);
+        return;
+      }
+      setError(err.response?.data?.message || `Registration failed with status ${err.response.status}. Please check the backend API URL and entered details.`);
     }
   };
 
@@ -30,6 +45,19 @@ export default function RegisterPage() {
         <div className="col-lg-8">
           <p className="eyebrow">Premium onboarding</p>
           <h2>Create your profile</h2>
+          <form className="api-config-panel mb-3" onSubmit={saveBackendUrl}>
+            <label htmlFor="registerApiUrl">Backend API URL</label>
+            <div>
+              <input
+                id="registerApiUrl"
+                className="form-control"
+                placeholder="https://your-backend-domain.com/api"
+                value={apiUrl}
+                onChange={(event) => setApiUrl(event.target.value)}
+              />
+              <button className="btn btn-outline-dark" type="submit">Save</button>
+            </div>
+          </form>
           <form className="surface p-4" onSubmit={submit}>
             {error && <div className="alert alert-danger">{error}</div>}
             <div className="row g-3">
