@@ -7,14 +7,19 @@ const normalizeApiUrl = (url) => {
 };
 
 const isLocalFrontend = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const isVercelFrontend = typeof window !== 'undefined' && window.location.hostname === 'love-connect-beta.vercel.app';
 const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('loveconnect_api_url') : '';
-const fallbackApiUrl = isLocalFrontend ? 'http://localhost:8080/api' : '';
+const fallbackApiUrl = isLocalFrontend
+  ? 'http://localhost:8080/api'
+  : isVercelFrontend
+    ? 'https://loveconnect-76mr.onrender.com/api'
+    : '';
 
 export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 export const apiUnavailableMessage = API_BASE_URL
   ? `Backend API is not reachable at ${API_BASE_URL}. Make sure the Spring Boot API is running and CORS allows this frontend domain.`
-  : 'Backend API URL is not configured. Set VITE_API_URL in deployment settings, or enter a backend URL on this page.';
+  : 'Backend API URL is not configured. Set VITE_API_URL in deployment settings.';
 
 export const saveRuntimeApiUrl = (url) => {
   const normalized = normalizeApiUrl(url);
