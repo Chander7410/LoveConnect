@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
@@ -14,11 +14,23 @@ import SubscriptionPage from './pages/SubscriptionPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import { currentUser } from './services/api.js';
 
-function PrivateRoute({ children }) {
-  return currentUser() ? children : <Navigate to="/login" replace />;
+function PrivateRoute({ children, user }) {
+  return user ? children : <Navigate to="/login" replace />;
 }
 
 export default function App() {
+  const [user, setUser] = useState(currentUser);
+
+  useEffect(() => {
+    const syncUser = () => setUser(currentUser());
+    window.addEventListener('loveconnect:sessionChanged', syncUser);
+    window.addEventListener('storage', syncUser);
+    return () => {
+      window.removeEventListener('loveconnect:sessionChanged', syncUser);
+      window.removeEventListener('storage', syncUser);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <Navbar />
@@ -27,13 +39,13 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-          <Route path="/search" element={<PrivateRoute><SearchPage /></PrivateRoute>} />
-          <Route path="/matches" element={<PrivateRoute><MatchesPage /></PrivateRoute>} />
-          <Route path="/chat" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
-          <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
-          <Route path="/subscription" element={<PrivateRoute><SubscriptionPage /></PrivateRoute>} />
-          <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute user={user}><ProfilePage /></PrivateRoute>} />
+          <Route path="/search" element={<PrivateRoute user={user}><SearchPage /></PrivateRoute>} />
+          <Route path="/matches" element={<PrivateRoute user={user}><MatchesPage /></PrivateRoute>} />
+          <Route path="/chat" element={<PrivateRoute user={user}><ChatPage /></PrivateRoute>} />
+          <Route path="/notifications" element={<PrivateRoute user={user}><NotificationsPage /></PrivateRoute>} />
+          <Route path="/subscription" element={<PrivateRoute user={user}><SubscriptionPage /></PrivateRoute>} />
+          <Route path="/admin" element={<PrivateRoute user={user}><AdminDashboard /></PrivateRoute>} />
         </Routes>
       </main>
       <Footer />

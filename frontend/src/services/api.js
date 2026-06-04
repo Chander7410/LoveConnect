@@ -49,6 +49,7 @@ export const saveSession = (auth, remember) => {
   const storage = remember ? localStorage : sessionStorage;
   storage.setItem('loveconnect_token', auth.token);
   storage.setItem('loveconnect_user', JSON.stringify(auth.user));
+  window.dispatchEvent(new Event('loveconnect:sessionChanged'));
 };
 
 export const clearSession = () => {
@@ -56,6 +57,7 @@ export const clearSession = () => {
   localStorage.removeItem('loveconnect_user');
   sessionStorage.removeItem('loveconnect_token');
   sessionStorage.removeItem('loveconnect_user');
+  window.dispatchEvent(new Event('loveconnect:sessionChanged'));
 };
 
 export const currentUser = () => {

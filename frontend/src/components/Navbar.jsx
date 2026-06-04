@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Bell,
   BellOff,
@@ -31,7 +31,7 @@ const defaultCallSettings = {
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const user = currentUser();
+  const [user, setUser] = useState(currentUser);
   const displayName = user?.name || user?.email || 'User';
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [callSettings, setCallSettings] = useState(() => {
@@ -46,6 +46,16 @@ export default function Navbar() {
     clearSession();
     navigate('/login');
   };
+
+  useEffect(() => {
+    const syncUser = () => setUser(currentUser());
+    window.addEventListener('loveconnect:sessionChanged', syncUser);
+    window.addEventListener('storage', syncUser);
+    return () => {
+      window.removeEventListener('loveconnect:sessionChanged', syncUser);
+      window.removeEventListener('storage', syncUser);
+    };
+  }, []);
 
   const updateCallSetting = (key, value) => {
     setCallSettings((current) => {
