@@ -41,6 +41,8 @@ public class AppAuthService {
         user.setAge(request.age());
         user.setLocation(request.location().trim());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setOnline(true);
+        user.setVerified(true);
         user.setLastSeenAt(Instant.now());
         user.setRole("USER");
         var saved = users.save(user);
@@ -53,6 +55,9 @@ public class AppAuthService {
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid credentials");
         }
-        return new AuthResponse(tokens.create(user.getFirebaseUid()), UserResponse.from(user));
+        user.setOnline(true);
+        user.setLastSeenAt(Instant.now());
+        var saved = users.save(user);
+        return new AuthResponse(tokens.create(saved.getFirebaseUid()), UserResponse.from(saved));
     }
 }

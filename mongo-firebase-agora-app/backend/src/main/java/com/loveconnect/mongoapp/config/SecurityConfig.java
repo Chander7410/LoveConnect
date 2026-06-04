@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/error", "/api/health", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/ws/**").permitAll()
-                .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(firebaseFilter, UsernamePasswordAuthenticationFilter.class)

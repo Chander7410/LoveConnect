@@ -20,6 +20,9 @@ public class UserProfile {
     @Indexed(unique = true, sparse = true)
     private String email;
     private String passwordHash;
+    @Indexed(sparse = true)
+    private String passwordResetToken;
+    private Instant passwordResetExpiresAt;
     private String displayName;
     private String photoUrl;
     private String bio;
@@ -50,6 +53,10 @@ public class UserProfile {
     public void setEmail(String email) { this.email = email; }
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getPasswordResetToken() { return passwordResetToken; }
+    public void setPasswordResetToken(String passwordResetToken) { this.passwordResetToken = passwordResetToken; }
+    public Instant getPasswordResetExpiresAt() { return passwordResetExpiresAt; }
+    public void setPasswordResetExpiresAt(Instant passwordResetExpiresAt) { this.passwordResetExpiresAt = passwordResetExpiresAt; }
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public String getPhotoUrl() { return photoUrl; }

@@ -2,18 +2,18 @@ services:
   - type: web
     name: loveconnect-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
+    dockerContext: ./mongo-firebase-agora-app/backend
     envVars:
       - key: SERVER_PORT
         value: 8080
-      - key: SPRING_PROFILES_ACTIVE
-        value: dev
+      - key: MONGODB_URI
+        sync: false
       - key: APP_CORS_ALLOWED_ORIGINS
         value: https://love-connect-beta.vercel.app
       - key: APP_JWT_SECRET
         generateValue: true
-      - key: APP_JWT_EXPIRATION_MINUTES
-        value: 1440
-      - key: APP_UPLOAD_DIR
-        value: /app/uploads
+      - key: ALLOW_DEV_TOKENS
+        value: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
