@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api, { apiUnavailableMessage, clearSession, mediaUrl } from '../services/api.js';
 
 export default function ProfilePage() {
-  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({ bio: '', education: '', profession: '', city: '', interests: '' });
   const [message, setMessage] = useState('');
@@ -41,10 +39,6 @@ export default function ProfilePage() {
       await api.put('/profile/me', { ...form, interests: form.interests.split(',').map((x) => x.trim()).filter(Boolean) });
       await load();
       setMessage('Profile saved successfully.');
-      setTimeout(() => {
-        clearSession();
-        navigate('/login', { replace: true });
-      }, 800);
     } catch (err) {
       if (!err.response) {
         setError(apiUnavailableMessage);

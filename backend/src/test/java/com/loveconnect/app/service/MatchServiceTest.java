@@ -9,6 +9,7 @@ import com.loveconnect.app.repository.LikeRepository;
 import com.loveconnect.app.repository.MatchRepository;
 import com.loveconnect.app.repository.UserRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,13 +25,16 @@ class MatchServiceTest {
     @Mock LikeRepository likeRepository;
     @Mock MatchRepository matchRepository;
     @Mock NotificationService notificationService;
+    @Mock SafetyService safetyService;
     @InjectMocks MatchService matchService;
 
     @Test
     void recommendationsRankUsersWithCommonInterests() {
         User current = user(1L, "Ava", 28, "Pune", new HashSet<>(Arrays.asList("music", "travel")));
         User candidate = user(2L, "Mia", 29, "Pune", new HashSet<>(Arrays.asList("music", "fitness")));
+        when(userRepository.findById(current.getId())).thenReturn(Optional.of(current));
         when(userRepository.findAll()).thenReturn(Arrays.asList(current, candidate));
+        when(safetyService.isBlockedBetween(current.getId(), candidate.getId())).thenReturn(false);
 
         List<com.loveconnect.app.dto.MatchResponse> results = matchService.recommendations(current);
 

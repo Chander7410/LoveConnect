@@ -12,6 +12,7 @@ import com.loveconnect.app.dto.LoginRequest;
 import com.loveconnect.app.dto.UserResponse;
 import com.loveconnect.app.entity.Gender;
 import com.loveconnect.app.entity.Role;
+import com.loveconnect.app.security.JwtService;
 import com.loveconnect.app.service.AuthService;
 import java.util.Map;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
@@ -28,6 +30,8 @@ class AuthControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @MockBean AuthService authService;
+    @MockBean JwtService jwtService;
+    @MockBean UserDetailsService userDetailsService;
 
     @Test
     void loginReturnsToken() throws Exception {
