@@ -12,7 +12,7 @@ const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('love
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
-    ? 'https://loveconnect-76mr.onrender.com/api'
+    ? 'https://loveconnect-mddv.onrender.com/api'
     : '';
 
 export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
