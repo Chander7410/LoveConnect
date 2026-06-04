@@ -14,6 +14,7 @@ import com.loveconnect.app.entity.Gender;
 import com.loveconnect.app.entity.Role;
 import com.loveconnect.app.security.JwtService;
 import com.loveconnect.app.service.AuthService;
+import com.loveconnect.app.service.CurrentUserService;
 import java.util.Map;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ class AuthControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @MockBean AuthService authService;
+    @MockBean CurrentUserService currentUserService;
     @MockBean JwtService jwtService;
     @MockBean UserDetailsService userDetailsService;
 

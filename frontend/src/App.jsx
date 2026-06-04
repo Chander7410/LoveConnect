@@ -12,7 +12,7 @@ import ChatPage from './pages/ChatPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
 import SubscriptionPage from './pages/SubscriptionPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
-import { currentUser } from './services/api.js';
+import api, { currentUser } from './services/api.js';
 
 function PrivateRoute({ children, user }) {
   return user ? children : <Navigate to="/login" replace />;
@@ -30,6 +30,22 @@ export default function App() {
       window.removeEventListener('storage', syncUser);
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const markOnline = () => {
+      if (document.visibilityState === 'visible') {
+        api.post('/auth/presence').catch(() => {});
+      }
+    };
+    markOnline();
+    const interval = window.setInterval(markOnline, 30000);
+    document.addEventListener('visibilitychange', markOnline);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', markOnline);
+    };
+  }, [user]);
 
   return (
     <BrowserRouter>

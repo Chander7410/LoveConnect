@@ -17,7 +17,7 @@ import {
   VideoOff
 } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { clearSession, currentUser } from '../services/api.js';
+import api, { clearSession, currentUser } from '../services/api.js';
 
 const defaultCallSettings = {
   audioCallsEnabled: true,
@@ -42,7 +42,12 @@ export default function Navbar() {
     }
   });
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Local session should still be cleared if the network is unavailable.
+    }
     clearSession();
     navigate('/login');
   };

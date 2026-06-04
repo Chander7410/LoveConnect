@@ -39,7 +39,8 @@ api.interceptors.request.use((config) => {
   if (!API_BASE_URL) {
     throw new Error(apiUnavailableMessage);
   }
-  if (config.url?.startsWith('/auth/')) return config;
+  const publicAuthPaths = ['/auth/register', '/auth/login', '/auth/forgot-password', '/auth/reset-password'];
+  if (publicAuthPaths.includes(config.url)) return config;
   const token = localStorage.getItem('loveconnect_token') || sessionStorage.getItem('loveconnect_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;

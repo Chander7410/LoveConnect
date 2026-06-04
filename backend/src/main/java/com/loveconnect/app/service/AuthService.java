@@ -59,19 +59,37 @@ public class AuthService {
         profile.setUser(user);
         profile.setCity(request.getLocation());
         user.setProfile(profile);
+        user.setOnline(true);
+        user.setLastSeenAt(Instant.now());
         userRepository.save(user);
         UserDetails details = org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
                 .password(user.getPassword()).roles(user.getRole().name()).build();
         return new AuthResponse(jwtService.generateToken(details, false), Mapper.user(user));
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
+        markOnline(user);
         UserDetails details = org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
                 .password(user.getPassword()).roles(user.getRole().name()).build();
         return new AuthResponse(jwtService.generateToken(details, request.isRememberMe()), Mapper.user(user));
+    }
+
+    @Transactional
+    public void markOnline(User user) {
+        user.setOnline(true);
+        user.setLastSeenAt(Instant.now());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void markOffline(User user) {
+        user.setOnline(false);
+        user.setLastSeenAt(Instant.now());
+        userRepository.save(user);
     }
 
     @Transactional
