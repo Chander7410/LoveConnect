@@ -1,6 +1,8 @@
 package com.loveconnect.mongoapp.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -24,6 +26,9 @@ public class UserProfile {
     private String gender;
     private Integer age;
     private String location;
+    private String education;
+    private String profession;
+    private List<String> interests = new ArrayList<>();
     private String role = "USER";
     private boolean online;
     private boolean blocked;
@@ -57,6 +62,12 @@ public class UserProfile {
     public void setAge(Integer age) { this.age = age; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public String getEducation() { return education; }
+    public void setEducation(String education) { this.education = education; }
+    public String getProfession() { return profession; }
+    public void setProfession(String profession) { this.profession = profession; }
+    public List<String> getInterests() { return interests; }
+    public void setInterests(List<String> interests) { this.interests = interests; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public boolean isOnline() { return online; }

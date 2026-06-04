@@ -6,6 +6,7 @@ import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import com.loveconnect.mongoapp.security.FirebasePrincipal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -39,6 +40,23 @@ public class ProfileService {
         }
         if (request.photoUrl() != null) {
             profile.setPhotoUrl(request.photoUrl().trim());
+        }
+        if (request.education() != null) {
+            profile.setEducation(request.education().trim());
+        }
+        if (request.profession() != null) {
+            profile.setProfession(request.profession().trim());
+        }
+        if (request.city() != null) {
+            profile.setLocation(request.city().trim());
+        }
+        if (request.interests() != null) {
+            profile.setInterests(request.interests().stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .limit(20)
+                .toList());
         }
         profile.setLastSeenAt(Instant.now());
         return userProfiles.save(profile);

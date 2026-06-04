@@ -45,10 +45,10 @@ public class LegacyProfileController {
         return Map.of(
             "user", UserResponse.from(profile),
             "bio", profile.getBio() == null ? "" : profile.getBio(),
-            "education", "",
-            "profession", "",
+            "education", profile.getEducation() == null ? "" : profile.getEducation(),
+            "profession", profile.getProfession() == null ? "" : profile.getProfession(),
             "city", profile.getLocation() == null ? "" : profile.getLocation(),
-            "interests", List.of(),
+            "interests", profile.getInterests() == null ? List.of() : profile.getInterests(),
             "photoUrls", List.of()
         );
     }
