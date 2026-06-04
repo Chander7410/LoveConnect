@@ -30,4 +30,10 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
             .body(new ApiMessage("MongoDB is not reachable. Check MONGODB_URI and MongoDB Atlas Network Access."));
     }
+
+    @ExceptionHandler(Exception.class)
+    ResponseEntity<ApiMessage> server(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(new ApiMessage("Server error: " + ex.getClass().getSimpleName()));
+    }
 }
