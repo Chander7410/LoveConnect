@@ -4,6 +4,7 @@ import com.loveconnect.mongoapp.model.UserProfile;
 import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,11 +33,24 @@ public class DemoDataConfig {
     private void upsert(UserProfileRepository users, PasswordEncoder passwordEncoder, String name, String email,
                         String phone, String gender, Integer age, String location, String profession,
                         String bio, List<String> interests, String password, boolean online) {
-        var profile = users.findByEmail(email).orElseGet(UserProfile::new);
-        profile.setFirebaseUid(profile.getFirebaseUid() == null ? "app-" + email.replaceAll("[^a-z0-9]", "") : profile.getFirebaseUid());
+        String firebaseUid = "app-" + email.replaceAll("[^a-z0-9]", "");
+        var profile = users.findByEmail(email)
+            .or(() -> users.findByFirebaseUid(firebaseUid))
+            .or(() -> users.findByPhoneNumber(phone))
+            .orElseGet(UserProfile::new);
+
+        if (isUniqueAvailable(users.findByFirebaseUid(firebaseUid).orElse(null), profile)) {
+            profile.setFirebaseUid(firebaseUid);
+        } else if (profile.getFirebaseUid() == null) {
+            profile.setFirebaseUid("app-" + email.replaceAll("[^a-z0-9]", "") + "-" + System.currentTimeMillis());
+        }
         profile.setDisplayName(name);
-        profile.setEmail(email);
-        profile.setPhoneNumber(phone);
+        if (isUniqueAvailable(users.findByEmail(email).orElse(null), profile)) {
+            profile.setEmail(email);
+        }
+        if (isUniqueAvailable(users.findByPhoneNumber(phone).orElse(null), profile)) {
+            profile.setPhoneNumber(phone);
+        }
         profile.setGender(gender);
         profile.setAge(age);
         profile.setLocation(location);
@@ -49,5 +63,9 @@ public class DemoDataConfig {
         profile.setOnline(online);
         profile.setLastSeenAt(Instant.now());
         users.save(profile);
+    }
+
+    private boolean isUniqueAvailable(UserProfile existing, UserProfile profile) {
+        return existing == null || Objects.equals(existing.getId(), profile.getId());
     }
 }
