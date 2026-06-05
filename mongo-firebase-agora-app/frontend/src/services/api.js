@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const normalizeApiUrl = (url) => {
+  if (!url) return '';
+  const trimmed = url.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const isLocalFrontend = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const fallbackApiUrl = isLocalFrontend ? 'http://localhost:8080/api' : 'https://loveconnect-mddv.onrender.com/api';
+
+export const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL || fallbackApiUrl);
 export const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
 let tokenProvider = async () => localStorage.getItem('loveconnect_token');

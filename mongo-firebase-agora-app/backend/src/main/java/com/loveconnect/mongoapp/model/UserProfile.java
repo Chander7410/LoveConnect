@@ -3,6 +3,7 @@ package com.loveconnect.mongoapp.model;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -19,9 +20,12 @@ public class UserProfile {
     private String phoneNumber;
     @Indexed(unique = true, sparse = true)
     private String email;
+    @JsonIgnore
     private String passwordHash;
     @Indexed(sparse = true)
+    @JsonIgnore
     private String passwordResetToken;
+    @JsonIgnore
     private Instant passwordResetExpiresAt;
     private String displayName;
     private String photoUrl;
