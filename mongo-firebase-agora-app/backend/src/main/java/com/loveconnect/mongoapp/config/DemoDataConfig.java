@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ public class DemoDataConfig {
     private static final String LIVE_TEST_PASSWORD = "qwerty@123";
 
     @Bean
+    @ConditionalOnProperty(name = "app.seed-demo-data", havingValue = "true")
     CommandLineRunner seedMongoProfiles(UserProfileRepository users, PasswordEncoder passwordEncoder) {
         return args -> {
             seedProfile(users, passwordEncoder, "roshan", "roshan@gmail.com", "7000000001",
