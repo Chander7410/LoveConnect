@@ -51,6 +51,8 @@ export default function App() {
 
   async function handleLogin(token) {
     saveToken(token);
+    setTokenProvider(async () => token);
+    setError('');
     await bootstrap();
   }
 
