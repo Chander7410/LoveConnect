@@ -5,6 +5,8 @@ import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,22 +14,33 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 public class DemoDataConfig {
+    private static final Logger log = LoggerFactory.getLogger(DemoDataConfig.class);
     private static final String LIVE_TEST_PASSWORD = "qwerty@123";
 
     @Bean
     CommandLineRunner seedMongoProfiles(UserProfileRepository users, PasswordEncoder passwordEncoder) {
         return args -> {
-            upsert(users, passwordEncoder, "roshan", "roshan@gmail.com", "7000000001",
+            seedProfile(users, passwordEncoder, "roshan", "roshan@gmail.com", "7000000001",
                 "MALE", 18, "pune", "Student", "Live profile", List.of("Car", "music", "travel"), LIVE_TEST_PASSWORD, true);
-            upsert(users, passwordEncoder, "pinky", "pinky@gmail.com", "7000000002",
+            seedProfile(users, passwordEncoder, "pinky", "pinky@gmail.com", "7000000002",
                 "FEMALE", 18, "Bangalore", "Student", "Live profile", List.of("Car", "music", "travel"), LIVE_TEST_PASSWORD, true);
-            upsert(users, passwordEncoder, "Aisha Demo", "demo.aisha@loveconnect.test", "9800000001",
+            seedProfile(users, passwordEncoder, "Aisha Demo", "demo.aisha@loveconnect.test", "9800000001",
                 "FEMALE", 27, "Pune", "Product designer", "Coffee walks, music, and weekend travel.", List.of("music", "travel", "coffee"), "Password123!", false);
-            upsert(users, passwordEncoder, "Rahul Demo", "demo.rahul@loveconnect.test", "9800000002",
+            seedProfile(users, passwordEncoder, "Rahul Demo", "demo.rahul@loveconnect.test", "9800000002",
                 "MALE", 30, "Pune", "Software engineer", "Runner, reader, and live music fan.", List.of("music", "running", "books"), "Password123!", false);
-            upsert(users, passwordEncoder, "Mira Demo", "demo.mira@loveconnect.test", "9800000003",
+            seedProfile(users, passwordEncoder, "Mira Demo", "demo.mira@loveconnect.test", "9800000003",
                 "FEMALE", 29, "Mumbai", "Marketing lead", "Food trails, travel, and photography.", List.of("travel", "food", "photography"), "Password123!", false);
         };
+    }
+
+    private void seedProfile(UserProfileRepository users, PasswordEncoder passwordEncoder, String name, String email,
+                             String phone, String gender, Integer age, String location, String profession,
+                             String bio, List<String> interests, String password, boolean online) {
+        try {
+            upsert(users, passwordEncoder, name, email, phone, gender, age, location, profession, bio, interests, password, online);
+        } catch (RuntimeException ex) {
+            log.warn("Skipping demo profile seed for {}", email, ex);
+        }
     }
 
     private void upsert(UserProfileRepository users, PasswordEncoder passwordEncoder, String name, String email,
