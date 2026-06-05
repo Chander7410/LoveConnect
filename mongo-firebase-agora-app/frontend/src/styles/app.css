@@ -19,7 +19,6 @@ body {
 
 button,
 input,
-select,
 textarea {
   font: inherit;
 }
@@ -197,7 +196,6 @@ label {
 }
 
 input,
-select,
 textarea {
   width: 100%;
   min-height: 54px;
@@ -216,52 +214,9 @@ textarea {
 }
 
 input:focus,
-select:focus,
 textarea:focus {
   border-color: #ff4f86;
   box-shadow: 0 0 0 4px rgba(255, 79, 134, 0.14);
-}
-
-.segmented,
-.formRow {
-  display: grid;
-  gap: 10px;
-}
-
-.segmented {
-  grid-template-columns: repeat(2, 1fr);
-  margin: 18px 0;
-  padding: 4px;
-  border-radius: 18px;
-  background: rgba(32, 34, 53, 0.06);
-}
-
-.segmented button {
-  min-height: 42px;
-  border: 0;
-  border-radius: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #383b52;
-  background: transparent;
-  font-weight: 800;
-}
-
-.segmented button.active {
-  color: #ff4f86;
-  background: #fff;
-  box-shadow: 0 8px 18px rgba(32, 34, 53, 0.08);
-}
-
-.segmented button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.formRow {
-  grid-template-columns: 1fr 1fr;
 }
 
 .inputIcon {
@@ -568,8 +523,7 @@ textarea:focus {
   }
 
   .composer,
-  .callStage,
-  .formRow {
+  .callStage {
     grid-template-columns: 1fr;
   }
 
