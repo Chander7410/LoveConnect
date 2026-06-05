@@ -40,6 +40,8 @@ api.interceptors.request.use(async (config) => {
 
 export const endpoints = {
   health: () => api.get('/health'),
+  register: (payload) => api.post('/auth/register', payload),
+  login: (payload) => api.post('/auth/login', payload),
   me: () => api.get('/auth/me'),
   profiles: () => api.get('/profiles'),
   updateProfile: (payload) => api.put('/profiles/me', payload),
