@@ -50,11 +50,11 @@ public class DemoDataConfig {
                         String bio, List<String> interests, String password, boolean online) {
         String firebaseUid = "app-" + email.replaceAll("[^a-z0-9]", "");
         var profile = firstByEmail(users, email)
-            .or(() -> users.findByFirebaseUid(firebaseUid))
+            .or(() -> firstByFirebaseUid(users, firebaseUid))
             .or(() -> firstByPhone(users, phone))
             .orElseGet(UserProfile::new);
 
-        if (isUniqueAvailable(users.findByFirebaseUid(firebaseUid).orElse(null), profile)) {
+        if (isUniqueAvailable(firstByFirebaseUid(users, firebaseUid).orElse(null), profile)) {
             profile.setFirebaseUid(firebaseUid);
         } else if (profile.getFirebaseUid() == null) {
             profile.setFirebaseUid("app-" + email.replaceAll("[^a-z0-9]", "") + "-" + System.currentTimeMillis());
@@ -90,5 +90,9 @@ public class DemoDataConfig {
 
     private java.util.Optional<UserProfile> firstByPhone(UserProfileRepository users, String phone) {
         return users.findAllByPhoneNumber(phone).stream().findFirst();
+    }
+
+    private java.util.Optional<UserProfile> firstByFirebaseUid(UserProfileRepository users, String firebaseUid) {
+        return users.findAllByFirebaseUid(firebaseUid).stream().findFirst();
     }
 }

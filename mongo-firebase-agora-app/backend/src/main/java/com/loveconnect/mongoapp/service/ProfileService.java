@@ -5,6 +5,7 @@ import com.loveconnect.mongoapp.model.UserProfile;
 import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import com.loveconnect.mongoapp.security.FirebasePrincipal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class ProfileService {
     }
 
     public UserProfile getOrCreate(FirebasePrincipal principal) {
-        return userProfiles.findByFirebaseUid(principal.uid()).orElseGet(() -> {
+        return newestFirst(userProfiles.findAllByFirebaseUid(principal.uid())).stream().findFirst().orElseGet(() -> {
             var profile = new UserProfile();
             profile.setFirebaseUid(principal.uid());
             profile.setPhoneNumber(StringUtils.hasText(principal.phoneNumber()) ? principal.phoneNumber() : principal.uid());
@@ -65,5 +66,14 @@ public class ProfileService {
     public List<UserProfile> discover(FirebasePrincipal principal) {
         getOrCreate(principal);
         return userProfiles.findByFirebaseUidNotOrderByDisplayNameAsc(principal.uid());
+    }
+
+    private List<UserProfile> newestFirst(List<UserProfile> profiles) {
+        return profiles.stream()
+            .sorted(Comparator.comparing(
+                UserProfile::getUpdatedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
+            ))
+            .toList();
     }
 }
