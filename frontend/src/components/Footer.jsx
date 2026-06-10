@@ -11,7 +11,7 @@ export default function Footer() {
             <Heart size={24} fill="currentColor" /> LoveConnect
           </Link>
           <p className="mt-3 mb-0">
-            Premium matching, secure conversations, and elegant profile discovery for modern relationships.
+            Premium matching, secure conversations, and elegant profile discovery for Maratha singles in the USA.
           </p>
         </div>
         <div className="footer-links">

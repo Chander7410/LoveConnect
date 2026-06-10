@@ -4295,3 +4295,318 @@ textarea.form-control:focus {
   .lc-xxl-m-9 { margin: 2.25rem !important; }
   .lc-xxl-m-10 { margin: 2.5rem !important; }
 }
+
+/* Maratha USA theme refinements */
+:root {
+  --lc-primary: #ff4778;
+  --lc-secondary: #ff7f93;
+  --lc-accent: #8b1e55;
+  --lc-ink: #151726;
+  --lc-muted: #657088;
+  --lc-gradient-primary: linear-gradient(135deg, #ff4778 0%, #ff7f93 58%, #f5a37f 100%);
+  --lc-gradient-premium: linear-gradient(135deg, #8b1e55 0%, #ff4778 50%, #f5a37f 100%);
+}
+
+.navbar-brand,
+.footer-brand {
+  white-space: nowrap;
+}
+
+.maratha-hero {
+  min-height: calc(100vh - var(--lc-nav-height));
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 248, 250, 0.82) 45%, rgba(255, 255, 255, 0.28) 100%),
+    url('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1800&q=85') center/cover;
+}
+
+.maratha-hero h1 {
+  max-width: 980px;
+  background: linear-gradient(135deg, #351429 0%, #ff4778 48%, #8b1e55 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.maratha-hero .lead {
+  max-width: 780px;
+  font-size: clamp(1.05rem, 1.45vw, 1.32rem);
+}
+
+.maratha-hero .hero-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  max-width: 840px;
+  gap: 1rem;
+}
+
+.maratha-hero .stat-card {
+  padding: 1rem;
+  border: 1px solid rgba(255, 71, 120, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: 0 18px 44px rgba(21, 23, 38, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.maratha-hero .stat-card svg {
+  color: var(--lc-primary);
+}
+
+.maratha-hero .stat-card strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--lc-ink);
+  font-size: clamp(1.8rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.maratha-hero .stat-card span {
+  color: var(--lc-muted);
+  font-weight: 800;
+}
+
+.hero-phone {
+  max-width: 450px;
+  margin-left: auto;
+  padding: 1.25rem;
+  border-radius: 42px;
+}
+
+.hero-match-photo {
+  min-height: 520px;
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, transparent 44%, rgba(20, 12, 19, 0.76) 100%),
+    url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85') center/cover;
+}
+
+.hero-match-info p {
+  margin: 0.3rem 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 800;
+}
+
+.love-search-page {
+  max-width: 1240px;
+}
+
+.search-hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.search-hero h2 {
+  margin-bottom: 0.4rem;
+  font-size: clamp(2.25rem, 5vw, 4.6rem);
+}
+
+.search-subtitle {
+  max-width: 680px;
+  margin: 0;
+  color: var(--lc-muted);
+  font-weight: 650;
+}
+
+.search-filters {
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.search-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filter-field .form-label {
+  color: #31364f;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.filter-field .form-control,
+.gender-picker-button {
+  min-height: 58px;
+  border: 1px solid rgba(255, 71, 120, 0.18);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 14px 34px rgba(21, 23, 38, 0.08);
+  color: var(--lc-ink);
+  font-size: 1rem;
+  font-weight: 780;
+}
+
+.gender-picker {
+  position: relative;
+}
+
+.gender-picker-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.9rem;
+}
+
+.gender-picker-button::after {
+  margin-left: auto;
+  content: '^';
+  color: var(--lc-primary);
+  transform: rotate(180deg);
+}
+
+.gender-picker.open .gender-picker-button::after {
+  transform: none;
+}
+
+.gender-picker-badge {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--lc-gradient-primary);
+  font-size: 0.84rem;
+  font-weight: 950;
+}
+
+.gender-picker-menu {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  left: 0;
+  z-index: 20;
+  width: min(320px, 92vw);
+  padding: 0.6rem;
+  border: 1px solid rgba(255, 71, 120, 0.22);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 26px 70px rgba(21, 23, 38, 0.18);
+}
+
+.gender-picker-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 52px;
+  margin-bottom: 0.35rem;
+  padding: 0.35rem 0.55rem;
+  border: 0;
+  border-radius: 16px;
+  color: var(--lc-ink);
+  background: transparent;
+  font-weight: 850;
+}
+
+.gender-picker-menu button.active,
+.gender-picker-menu button:hover {
+  color: #fff;
+  background: var(--lc-gradient-primary);
+}
+
+.gender-picker-menu button.active .gender-picker-badge,
+.gender-picker-menu button:hover .gender-picker-badge {
+  color: var(--lc-primary);
+  background: #fff;
+}
+
+.search-results-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--lc-muted);
+  font-weight: 850;
+}
+
+.profile-grid {
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 1.35rem;
+}
+
+.match-card {
+  border-radius: 28px;
+}
+
+.match-photo {
+  min-height: 340px;
+  border-radius: 26px 26px 0 0;
+}
+
+.match-status {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  color: transparent;
+  background: #b6bfcc;
+  box-shadow: 0 0 0 1px rgba(21, 23, 38, 0.12);
+}
+
+.match-status.online {
+  background: #00c48c;
+}
+
+.community-line {
+  color: #8b1e55;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.match-actions .btn {
+  min-height: 46px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.like-button {
+  color: #fff;
+  background: var(--lc-gradient-primary);
+  border-color: transparent;
+}
+
+.dislike-button {
+  color: var(--lc-ink);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(21, 23, 38, 0.16);
+}
+
+@media (max-width: 991px) {
+  .maratha-hero .hero-stats,
+  .search-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .search-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 575px) {
+  .navbar-brand {
+    max-width: 210px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .maratha-hero .hero-stats,
+  .search-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .maratha-hero .d-flex.gap-3 {
+    flex-direction: column;
+  }
+
+  .search-results-bar {
+    flex-direction: column;
+  }
+}

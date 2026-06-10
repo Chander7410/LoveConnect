@@ -11,6 +11,10 @@ export default function ProfileCard({ match, onReact }) {
     ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=85'
     : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85';
   const like = async (liked) => {
+    if (String(user.id).startsWith('demo-')) {
+      setFeedback(liked ? 'Liked preview profile' : 'Passed preview profile');
+      return;
+    }
     setBusy(true);
     setError('');
     setFeedback('');
@@ -25,6 +29,10 @@ export default function ProfileCard({ match, onReact }) {
     }
   };
   const superLike = async () => {
+    if (String(user.id).startsWith('demo-')) {
+      setFeedback('Super Like sent to preview profile');
+      return;
+    }
     setBusy(true);
     setError('');
     setFeedback('');
@@ -39,6 +47,10 @@ export default function ProfileCard({ match, onReact }) {
     }
   };
   const report = async () => {
+    if (String(user.id).startsWith('demo-')) {
+      setFeedback('Preview profile report noted');
+      return;
+    }
     const details = window.prompt('Why are you reporting this profile?', 'Fake profile or unsafe behavior');
     if (!details) return;
     setBusy(true);
@@ -54,6 +66,10 @@ export default function ProfileCard({ match, onReact }) {
     }
   };
   const block = async () => {
+    if (String(user.id).startsWith('demo-')) {
+      setFeedback('Preview profile hidden');
+      return;
+    }
     setBusy(true);
     setError('');
     setFeedback('');
@@ -78,6 +94,7 @@ export default function ProfileCard({ match, onReact }) {
           <div>
             <h5 className="mb-1">{user.name}, {user.age} {user.verified && <BadgeCheck size={18} className="verified-badge" />}</h5>
             <p className="match-location mb-2"><MapPin size={15} /> {user.location} · {user.gender}</p>
+            <p className="community-line mb-2">Maratha community · USA based</p>
             {user.fakeProfileScore >= 60 && <p className="safety-warning mb-2">Safety review suggested</p>}
           </div>
           <span className={`match-status ${user.online ? 'online' : ''}`}>{user.online ? 'Online' : 'Offline'}</span>

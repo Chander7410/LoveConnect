@@ -10,8 +10,56 @@ const genderOptions = [
   { value: 'OTHER', label: 'Other', accent: 'O' }
 ];
 
+const demoMatches = [
+  {
+    matchScore: 96,
+    commonInterests: ['Marathi culture', 'Travel', 'Family values'],
+    user: {
+      id: 'demo-aarya',
+      name: 'Aarya Patil',
+      age: 27,
+      gender: 'FEMALE',
+      location: 'New Jersey, USA',
+      verified: true,
+      online: true,
+      fakeProfileScore: 10,
+      profilePictureUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85'
+    }
+  },
+  {
+    matchScore: 91,
+    commonInterests: ['Ganesh Utsav', 'Fitness', 'Startups'],
+    user: {
+      id: 'demo-rohan',
+      name: 'Rohan Deshmukh',
+      age: 30,
+      gender: 'MALE',
+      location: 'Dallas, USA',
+      verified: true,
+      online: false,
+      fakeProfileScore: 8,
+      profilePictureUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=85'
+    }
+  },
+  {
+    matchScore: 88,
+    commonInterests: ['Classical music', 'Food', 'Hiking'],
+    user: {
+      id: 'demo-sayali',
+      name: 'Sayali Jadhav',
+      age: 25,
+      gender: 'FEMALE',
+      location: 'California, USA',
+      verified: false,
+      online: true,
+      fakeProfileScore: 12,
+      profilePictureUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=85'
+    }
+  }
+];
+
 export default function SearchPage() {
-  const [filters, setFilters] = useState({ minAge: 18, maxAge: 60, gender: '', city: '', interest: '' });
+  const [filters, setFilters] = useState({ minAge: 21, maxAge: 45, gender: '', city: 'New Jersey', interest: 'Marathi culture' });
   const [matches, setMatches] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,14 +74,16 @@ export default function SearchPage() {
       setMatches(data);
     } catch (err) {
       if (!err.response) {
-        setError(apiUnavailableMessage);
+        setError(`${apiUnavailableMessage} Showing Maratha USA demo matches for preview.`);
+        setMatches(demoMatches);
       } else if (err.response.status === 401 || err.response.status === 403) {
         clearSession();
         setError('Please login again before searching matches.');
+        setMatches(demoMatches);
       } else {
-        setError(err.response?.data?.message || 'Search failed. Please try again.');
+        setError(`${err.response?.data?.message || 'Search failed. Please try again.'} Showing preview profiles.`);
+        setMatches(demoMatches);
       }
-      setMatches([]);
     } finally {
       setLoading(false);
     }
@@ -44,9 +94,9 @@ export default function SearchPage() {
     <div className="container py-4 page-transition love-search-page">
       <div className="search-hero mb-4">
         <div>
-          <p className="eyebrow">Curated discovery</p>
+          <p className="eyebrow">Maratha USA discovery</p>
           <h2>Search matches</h2>
-          <p className="search-subtitle">Find compatible LoveConnect profiles by age, gender, city, and interests.</p>
+          <p className="search-subtitle">Find Marathi and Maratha singles by age, gender, US city, and shared interests.</p>
         </div>
         <button className="btn btn-rose" onClick={load} disabled={loading}>{loading ? 'Searching...' : 'Search'}</button>
       </div>
@@ -82,13 +132,13 @@ export default function SearchPage() {
               )}
             </div>
           </div>
-          <div className="filter-field"><label className="form-label">City</label><input className="form-control" placeholder="Delhi" value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} /></div>
-          <div className="filter-field"><label className="form-label">Interest</label><input className="form-control" placeholder="Music, travel..." value={filters.interest} onChange={(e) => setFilters({ ...filters, interest: e.target.value })} /></div>
+          <div className="filter-field"><label className="form-label">City</label><input className="form-control" placeholder="New Jersey" value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} /></div>
+          <div className="filter-field"><label className="form-label">Interest</label><input className="form-control" placeholder="Marathi culture, travel..." value={filters.interest} onChange={(e) => setFilters({ ...filters, interest: e.target.value })} /></div>
         </div>
       </div>
       <div className="search-results-bar mb-3">
         <span>{matches.length} profiles found</span>
-        <span>Premium recommendations refresh instantly</span>
+        <span>Maratha USA recommendations refresh instantly</span>
       </div>
       <div className="profile-grid">
         {matches.map((match) => <ProfileCard key={match.user.id} match={match} onReact={load} />)}

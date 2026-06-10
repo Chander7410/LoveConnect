@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "installCommand": "cd mongo-firebase-agora-app/frontend && npm ci",
-  "buildCommand": "cd mongo-firebase-agora-app/frontend && npm run build",
-  "outputDirectory": "mongo-firebase-agora-app/frontend/dist",
+  "installCommand": "cd frontend && npm ci",
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/(.*)",
