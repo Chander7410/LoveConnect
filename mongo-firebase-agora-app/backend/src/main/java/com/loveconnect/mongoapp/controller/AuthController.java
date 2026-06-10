@@ -77,7 +77,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public Map<String, Object> forgotPassword(@RequestBody Map<String, String> request) {
         var email = request.getOrDefault("email", "").trim().toLowerCase();
-        return users.findByEmail(email)
+        return users.findAllByEmail(email).stream().findFirst()
             .map(user -> {
                 byte[] tokenBytes = new byte[32];
                 secureRandom.nextBytes(tokenBytes);

@@ -49,9 +49,9 @@ public class DemoDataConfig {
                         String phone, String gender, Integer age, String location, String profession,
                         String bio, List<String> interests, String password, boolean online) {
         String firebaseUid = "app-" + email.replaceAll("[^a-z0-9]", "");
-        var profile = users.findByEmail(email)
+        var profile = firstByEmail(users, email)
             .or(() -> users.findByFirebaseUid(firebaseUid))
-            .or(() -> users.findByPhoneNumber(phone))
+            .or(() -> firstByPhone(users, phone))
             .orElseGet(UserProfile::new);
 
         if (isUniqueAvailable(users.findByFirebaseUid(firebaseUid).orElse(null), profile)) {
@@ -60,10 +60,10 @@ public class DemoDataConfig {
             profile.setFirebaseUid("app-" + email.replaceAll("[^a-z0-9]", "") + "-" + System.currentTimeMillis());
         }
         profile.setDisplayName(name);
-        if (isUniqueAvailable(users.findByEmail(email).orElse(null), profile)) {
+        if (isUniqueAvailable(firstByEmail(users, email).orElse(null), profile)) {
             profile.setEmail(email);
         }
-        if (isUniqueAvailable(users.findByPhoneNumber(phone).orElse(null), profile)) {
+        if (isUniqueAvailable(firstByPhone(users, phone).orElse(null), profile)) {
             profile.setPhoneNumber(phone);
         }
         profile.setGender(gender);
@@ -82,5 +82,13 @@ public class DemoDataConfig {
 
     private boolean isUniqueAvailable(UserProfile existing, UserProfile profile) {
         return existing == null || Objects.equals(existing.getId(), profile.getId());
+    }
+
+    private java.util.Optional<UserProfile> firstByEmail(UserProfileRepository users, String email) {
+        return users.findAllByEmail(email).stream().findFirst();
+    }
+
+    private java.util.Optional<UserProfile> firstByPhone(UserProfileRepository users, String phone) {
+        return users.findAllByPhoneNumber(phone).stream().findFirst();
     }
 }

@@ -8,6 +8,8 @@ import com.loveconnect.mongoapp.model.UserProfile;
 import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import com.loveconnect.mongoapp.security.AppTokenService;
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -50,14 +52,23 @@ public class AppAuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        var user = users.findByEmail(request.email().trim().toLowerCase())
+        var candidates = users.findAllByEmail(request.email().trim().toLowerCase());
+        var user = newestFirst(candidates).stream()
+            .filter(candidate -> passwordEncoder.matches(request.password(), candidate.getPasswordHash()))
+            .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid credentials");
-        }
         user.setOnline(true);
         user.setLastSeenAt(Instant.now());
         var saved = users.save(user);
         return new AuthResponse(tokens.create(saved.getFirebaseUid()), UserResponse.from(saved));
+    }
+
+    private List<UserProfile> newestFirst(List<UserProfile> profiles) {
+        return profiles.stream()
+            .sorted(Comparator.comparing(
+                UserProfile::getUpdatedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
+            ))
+            .toList();
     }
 }

@@ -9,6 +9,8 @@ public interface UserProfileRepository extends MongoRepository<UserProfile, Stri
     Optional<UserProfile> findByFirebaseUid(String firebaseUid);
     Optional<UserProfile> findByPhoneNumber(String phoneNumber);
     Optional<UserProfile> findByEmail(String email);
+    List<UserProfile> findAllByEmail(String email);
+    List<UserProfile> findAllByPhoneNumber(String phoneNumber);
     Optional<UserProfile> findByPasswordResetToken(String passwordResetToken);
     boolean existsByEmail(String email);
     boolean existsByPhoneNumber(String phoneNumber);
