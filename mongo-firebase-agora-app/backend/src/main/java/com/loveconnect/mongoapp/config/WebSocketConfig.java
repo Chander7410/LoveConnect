@@ -1,20 +1,30 @@
 package com.loveconnect.mongoapp.config;
 
 import java.util.Arrays;
+import com.loveconnect.mongoapp.security.FirebaseTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final String[] allowedOrigins;
+    private final FirebaseTokenService tokenService;
 
-    public WebSocketConfig(@Value("${app.cors.allowed-origins}") String allowedOrigins) {
+    public WebSocketConfig(@Value("${app.cors.allowed-origins}") String allowedOrigins, FirebaseTokenService tokenService) {
         this.allowedOrigins = Arrays.stream(allowedOrigins.split(",")).map(String::trim).toArray(String[]::new);
+        this.tokenService = tokenService;
     }
 
     @Override
@@ -26,5 +36,24 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");
         registry.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void configureClientInboundChannel(org.springframework.messaging.simp.config.ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                var accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    var auth = accessor.getFirstNativeHeader("Authorization");
+                    if (auth == null || !auth.startsWith("Bearer ")) {
+                        throw new IllegalArgumentException("Missing WebSocket bearer token");
+                    }
+                    var principal = tokenService.verify(auth.substring(7));
+                    accessor.setUser(principal::uid);
+                }
+                return message;
+            }
+        });
     }
 }

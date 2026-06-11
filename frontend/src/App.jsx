@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
+import AudioCallScreen from './components/AudioCallScreen.jsx';
+import IncomingCallModal from './components/IncomingCallModal.jsx';
+import VideoCallScreen from './components/VideoCallScreen.jsx';
+import { CallProvider } from './context/CallContext.jsx';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
@@ -49,22 +53,27 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Navbar />
-      <main className="app-shell">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/profile" element={<PrivateRoute user={user}><ProfilePage /></PrivateRoute>} />
-          <Route path="/search" element={<PrivateRoute user={user}><SearchPage /></PrivateRoute>} />
-          <Route path="/matches" element={<PrivateRoute user={user}><MatchesPage /></PrivateRoute>} />
-          <Route path="/chat" element={<PrivateRoute user={user}><ChatPage /></PrivateRoute>} />
-          <Route path="/notifications" element={<PrivateRoute user={user}><NotificationsPage /></PrivateRoute>} />
-          <Route path="/subscription" element={<PrivateRoute user={user}><SubscriptionPage /></PrivateRoute>} />
-          <Route path="/admin" element={<PrivateRoute user={user}><AdminDashboard /></PrivateRoute>} />
-        </Routes>
-      </main>
-      <Footer />
+      <CallProvider>
+        <Navbar />
+        <IncomingCallModal />
+        <AudioCallScreen />
+        <VideoCallScreen />
+        <main className="app-shell">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/profile" element={<PrivateRoute user={user}><ProfilePage /></PrivateRoute>} />
+            <Route path="/search" element={<PrivateRoute user={user}><SearchPage /></PrivateRoute>} />
+            <Route path="/matches" element={<PrivateRoute user={user}><MatchesPage /></PrivateRoute>} />
+            <Route path="/chat" element={<PrivateRoute user={user}><ChatPage /></PrivateRoute>} />
+            <Route path="/notifications" element={<PrivateRoute user={user}><NotificationsPage /></PrivateRoute>} />
+            <Route path="/subscription" element={<PrivateRoute user={user}><SubscriptionPage /></PrivateRoute>} />
+            <Route path="/admin" element={<PrivateRoute user={user}><AdminDashboard /></PrivateRoute>} />
+          </Routes>
+        </main>
+        <Footer />
+      </CallProvider>
     </BrowserRouter>
   );
 }

@@ -16,10 +16,6 @@ app:
     allow-dev-tokens: ${ALLOW_DEV_TOKENS:false}
   jwt:
     secret: ${APP_JWT_SECRET:change-this-to-a-long-random-production-secret}
-  agora:
-    app-id: ${AGORA_APP_ID:}
-    app-certificate: ${AGORA_APP_CERTIFICATE:}
-
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

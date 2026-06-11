@@ -16,8 +16,6 @@ services:
       APP_CORS_ALLOWED_ORIGINS: http://localhost:5174,http://localhost:3000
       ALLOW_DEV_TOKENS: "true"
       FIREBASE_SERVICE_ACCOUNT_JSON: ""
-      AGORA_APP_ID: ""
-      AGORA_APP_CERTIFICATE: ""
     depends_on:
       - mongo
 

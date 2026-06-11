@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { BadgeCheck, Ban, Flag, Heart, MapPin, Sparkles, Star, X } from 'lucide-react';
+import { BadgeCheck, Ban, Flag, Heart, MapPin, Phone, Sparkles, Star, Video, X } from 'lucide-react';
 import api, { mediaUrl } from '../services/api.js';
+import { useCall } from '../context/CallContext.jsx';
 
 export default function ProfileCard({ match, onReact }) {
   const user = match.user;
+  const call = useCall();
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
@@ -109,9 +111,14 @@ export default function ProfileCard({ match, onReact }) {
           <button className="btn dislike-button flex-fill" disabled={busy} onClick={() => like(false)}><X size={18} /> Pass</button>
         </div>
         <div className="match-actions mt-2">
+          <button className="btn btn-sm btn-outline-dark flex-fill" disabled={busy || call?.activeCall} onClick={() => call?.startCall(user, 'AUDIO')}><Phone size={15} /> Audio</button>
+          <button className="btn btn-sm btn-outline-dark flex-fill" disabled={busy || call?.activeCall} onClick={() => call?.startCall(user, 'VIDEO')}><Video size={15} /> Video</button>
+        </div>
+        <div className="match-actions mt-2">
           <button className="btn btn-sm btn-outline-danger flex-fill" disabled={busy} onClick={report}><Flag size={15} /> Report</button>
           <button className="btn btn-sm btn-outline-dark flex-fill" disabled={busy} onClick={block}><Ban size={15} /> Block</button>
         </div>
+        {call?.error && <div className="match-feedback error">{call.error}</div>}
         {feedback && <div className="match-feedback success">{feedback}</div>}
         {error && <div className="match-feedback error">{error}</div>}
       </div>

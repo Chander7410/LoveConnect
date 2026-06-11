@@ -11,6 +11,7 @@ import {
   VideoOff
 } from 'lucide-react';
 import api, { currentUser, mediaUrl } from '../services/api.js';
+import { useCall } from '../context/CallContext.jsx';
 
 const defaultCallSettings = {
   audioCallsEnabled: true,
@@ -38,6 +39,7 @@ const videoRingtonePattern = [
 
 export default function ChatPage() {
   const me = currentUser();
+  const rtcCall = useCall();
   const [myProfile, setMyProfile] = useState(null);
   const [people, setPeople] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -61,6 +63,7 @@ export default function ChatPage() {
   const ringOscillatorsRef = useRef([]);
   const localVideoRef = useRef(null);
   const cameraStreamRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const [cameraStatus, setCameraStatus] = useState('');
 
   const visiblePeople = people.filter(({ user, commonInterests = [] }) => {
@@ -119,8 +122,11 @@ export default function ChatPage() {
       return;
     }
     try {
-      await api.post('/chat/messages', { receiverId: selectedUser.id, content });
+      const text = content.trim();
+      if (!text) return;
+      const { data } = await api.post('/chat/messages', { receiverId: selectedUser.id, content: text });
       setContent('');
+      setMessages((items) => items.some((item) => item.id === data.id) ? items : [...items, data]);
       await loadConversation(selectedUser);
     } catch (err) {
       setError(err.response?.data?.message || 'Message send failed.');
@@ -254,15 +260,8 @@ export default function ChatPage() {
       setError('Video calls are disabled in Call Settings.');
       return;
     }
-    if (type === 'VIDEO' || callSettings.microphoneEnabled) {
-      await startCallMedia(type);
-    } else {
-      stopCameraPreview();
-    }
     try {
-      const { data } = await api.post('/calls/start', { receiverId: selectedUser.id, type });
-      setActiveCall(data);
-      playRingingTone(type);
+      await rtcCall.startCall(selectedUser, type);
       await loadCallHistory();
     } catch (err) {
       stopCameraPreview();
@@ -275,7 +274,8 @@ export default function ChatPage() {
     stopRinging();
     stopCameraPreview();
     try {
-      const { data } = await api.post(`/calls/${activeCall.id}/end`);
+      await rtcCall.endCall();
+      const data = activeCall;
       setActiveCall(null);
       setCallHistory((items) => [data, ...items.filter((item) => item.id !== data.id)]);
     } catch (err) {
@@ -326,6 +326,35 @@ export default function ChatPage() {
       localVideoRef.current.play().catch(() => {});
     }
   }, [activeCall]);
+
+  useEffect(() => {
+    if (!selectedUser) return undefined;
+    let cancelled = false;
+    const refreshConversation = async () => {
+      try {
+        const { data } = await api.get(`/chat/conversation/${selectedUser.id}`);
+        if (!cancelled) setMessages(data);
+      } catch {
+        // Keep the current chat visible if a background refresh fails.
+      }
+    };
+    const interval = window.setInterval(refreshConversation, 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [selectedUser?.id]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      loadCallHistory();
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages.length, selectedUser?.id]);
 
   return (
     <div className="container py-4 page-transition">
@@ -426,10 +455,11 @@ export default function ChatPage() {
               </span>
             </div>
             <div className="call-actions">
-              <button className="btn btn-outline-dark" type="button" disabled={!selectedUser || activeCall || !callSettings.audioCallsEnabled} onClick={() => startCall('AUDIO')} title="Audio Call"><Phone size={18} /> Audio Call</button>
-              <button className="btn btn-outline-dark" type="button" disabled={!selectedUser || activeCall || !callSettings.videoCallsEnabled} onClick={() => startCall('VIDEO')} title="Video Call"><Video size={18} /> Video Call</button>
+              <button className="btn btn-outline-dark" type="button" disabled={!selectedUser || rtcCall.activeCall || !callSettings.audioCallsEnabled} onClick={() => startCall('AUDIO')} title="Audio Call"><Phone size={18} /> Audio Call</button>
+              <button className="btn btn-outline-dark" type="button" disabled={!selectedUser || rtcCall.activeCall || !callSettings.videoCallsEnabled} onClick={() => startCall('VIDEO')} title="Video Call"><Video size={18} /> Video Call</button>
             </div>
           </div>
+          {rtcCall.error && <div className="alert alert-danger">{rtcCall.error}</div>}
 
           {activeCall && (
             <div className={`active-call-panel ${activeCall.type === 'VIDEO' ? 'video' : ''}`}>
@@ -464,6 +494,7 @@ export default function ChatPage() {
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
             {messages.length === 0 && (
               <div className="chat-empty-state">
                 <MessageCircle size={34} />
