@@ -29,6 +29,7 @@ public class UserProfile {
     private Instant passwordResetExpiresAt;
     private String displayName;
     private String photoUrl;
+    private List<String> photoUrls = new ArrayList<>();
     private String bio;
     private String gender;
     private Integer age;
@@ -65,6 +66,8 @@ public class UserProfile {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public String getPhotoUrl() { return photoUrl; }
     public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+    public List<String> getPhotoUrls() { return photoUrls; }
+    public void setPhotoUrls(List<String> photoUrls) { this.photoUrls = photoUrls; }
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
     public String getGender() { return gender; }

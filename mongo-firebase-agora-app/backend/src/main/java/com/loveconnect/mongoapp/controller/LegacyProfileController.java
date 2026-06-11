@@ -7,6 +7,10 @@ import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import com.loveconnect.mongoapp.service.ProfileService;
 import com.loveconnect.mongoapp.service.SecurityContextService;
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,13 +53,21 @@ public class LegacyProfileController {
     }
 
     @PostMapping("/picture")
-    public Map<String, Object> picture(@RequestParam("file") MultipartFile file) {
-        return legacyResponse(profiles.getOrCreate(security.currentUser()));
+    public Map<String, Object> picture(@RequestParam("file") MultipartFile file) throws IOException {
+        var profile = profiles.getOrCreate(security.currentUser());
+        profile.setPhotoUrl(toDataUrl(file));
+        profile.setLastSeenAt(Instant.now());
+        return legacyResponse(users.save(profile));
     }
 
     @PostMapping("/photos")
-    public Map<String, Object> photos(@RequestParam("file") MultipartFile file) {
-        return legacyResponse(profiles.getOrCreate(security.currentUser()));
+    public Map<String, Object> photos(@RequestParam("file") MultipartFile file) throws IOException {
+        var profile = profiles.getOrCreate(security.currentUser());
+        var gallery = new ArrayList<>(profile.getPhotoUrls() == null ? List.<String>of() : profile.getPhotoUrls());
+        gallery.add(toDataUrl(file));
+        profile.setPhotoUrls(gallery.stream().skip(Math.max(0, gallery.size() - 8)).toList());
+        profile.setLastSeenAt(Instant.now());
+        return legacyResponse(users.save(profile));
     }
 
     private Map<String, Object> legacyResponse(UserProfile profile) {
@@ -66,7 +78,21 @@ public class LegacyProfileController {
             "profession", profile.getProfession() == null ? "" : profile.getProfession(),
             "city", profile.getLocation() == null ? "" : profile.getLocation(),
             "interests", profile.getInterests() == null ? List.of() : profile.getInterests(),
-            "photoUrls", List.of()
+            "photoUrls", profile.getPhotoUrls() == null ? List.of() : profile.getPhotoUrls()
         );
+    }
+
+    private String toDataUrl(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Please choose a photo to upload.");
+        }
+        var contentType = file.getContentType();
+        if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
+            throw new IllegalArgumentException("Only image uploads are supported.");
+        }
+        if (file.getSize() > 2_000_000) {
+            throw new IllegalArgumentException("Photo must be 2 MB or smaller.");
+        }
+        return "data:" + contentType + ";base64," + Base64.getEncoder().encodeToString(file.getBytes());
     }
 }
