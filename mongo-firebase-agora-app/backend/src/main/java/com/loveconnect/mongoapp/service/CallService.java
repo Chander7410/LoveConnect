@@ -5,9 +5,11 @@ import com.loveconnect.mongoapp.model.CallHistoryStatus;
 import com.loveconnect.mongoapp.model.CallType;
 import com.loveconnect.mongoapp.model.UserProfile;
 import com.loveconnect.mongoapp.repository.CallHistoryRepository;
+import com.loveconnect.mongoapp.repository.ChatMessageRepository;
 import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import com.loveconnect.mongoapp.security.FirebasePrincipal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,16 +21,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class CallService {
     private final CallHistoryRepository calls;
+    private final ChatMessageRepository messages;
     private final UserProfileRepository users;
 
-    public CallService(CallHistoryRepository calls, UserProfileRepository users) {
+    public CallService(CallHistoryRepository calls, ChatMessageRepository messages, UserProfileRepository users) {
         this.calls = calls;
+        this.messages = messages;
         this.users = users;
     }
 
     public CallHistory request(FirebasePrincipal principal, String receiverId, CallType type) {
-        var caller = users.findAllByFirebaseUid(principal.uid()).stream().findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Caller profile not found"));
+        var caller = currentProfile(principal);
         var receiver = users.findById(receiverId == null ? "" : receiverId)
             .orElseThrow(() -> new IllegalArgumentException("Receiver profile not found"));
         validateMatched(caller, receiver);
@@ -53,8 +56,7 @@ public class CallService {
     }
 
     public List<CallHistory> history(FirebasePrincipal principal) {
-        var profile = users.findAllByFirebaseUid(principal.uid()).stream().findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Current profile not found"));
+        var profile = currentProfile(principal);
         return calls.findByCallerIdOrReceiverIdOrderByStartTimeDesc(profile.getId(), profile.getId());
     }
 
@@ -76,8 +78,7 @@ public class CallService {
     }
 
     private CallHistory findParticipantCall(FirebasePrincipal principal, String callId) {
-        var profile = users.findAllByFirebaseUid(principal.uid()).stream().findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Current profile not found"));
+        var profile = currentProfile(principal);
         var call = calls.findById(callId == null ? "" : callId)
             .orElseThrow(() -> new IllegalArgumentException("Call not found"));
         if (!profile.getId().equals(call.getCallerId()) && !profile.getId().equals(call.getReceiverId())) {
@@ -93,7 +94,7 @@ public class CallService {
         if (caller.isBlocked() || receiver.isBlocked()) {
             throw new IllegalArgumentException("Calls are not available for blocked profiles");
         }
-        if (!sameCity(caller, receiver) && sharedInterests(caller, receiver).isEmpty()) {
+        if (!sameCity(caller, receiver) && sharedInterests(caller, receiver).isEmpty() && !hasConversation(caller, receiver)) {
             throw new IllegalArgumentException("Calls are only allowed with matched users.");
         }
     }
@@ -112,7 +113,12 @@ public class CallService {
     private boolean sameCity(UserProfile caller, UserProfile receiver) {
         return caller.getLocation() != null
             && receiver.getLocation() != null
-            && caller.getLocation().equalsIgnoreCase(receiver.getLocation());
+            && caller.getLocation().trim().equalsIgnoreCase(receiver.getLocation().trim());
+    }
+
+    private boolean hasConversation(UserProfile caller, UserProfile receiver) {
+        if (caller.getFirebaseUid() == null || receiver.getFirebaseUid() == null) return false;
+        return messages.existsByConversationId(conversationId(caller.getFirebaseUid(), receiver.getFirebaseUid()));
     }
 
     private List<String> sharedInterests(UserProfile caller, UserProfile receiver) {
@@ -122,5 +128,21 @@ public class CallService {
         return (receiver.getInterests() == null ? List.<String>of() : receiver.getInterests()).stream()
             .filter(value -> callerInterests.contains(value.toLowerCase(Locale.ROOT)))
             .toList();
+    }
+
+    private UserProfile currentProfile(FirebasePrincipal principal) {
+        return users.findAllByFirebaseUid(principal.uid()).stream()
+            .sorted(Comparator
+                .comparing(UserProfile::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(UserProfile::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Current profile not found"));
+    }
+
+    private String conversationId(String firstUid, String secondUid) {
+        return List.of(firstUid, secondUid).stream()
+            .sorted(Comparator.naturalOrder())
+            .reduce((first, second) -> first + "_" + second)
+            .orElseThrow();
     }
 }
