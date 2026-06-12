@@ -70,19 +70,28 @@ export function CallProvider({ children }) {
         sendSignal('ice-candidate', {
           callId: activeRef.current.id,
           receiverId: activeRef.current.peerId,
+          receiverUid: activeRef.current.peerUid || undefined,
           payload: { candidate: event.candidate }
         });
       }
     };
     peer.ontrack = (event) => {
       logCall('remote track received', event.streams[0]);
+      logCall('remote stream received', event.streams[0]);
       setRemoteStream(event.streams[0]);
     };
     peer.onconnectionstatechange = () => {
       logCall('connection state change', peer.connectionState);
+      logCall('connectionState', peer.connectionState);
       if (['failed', 'disconnected', 'closed'].includes(peer.connectionState)) {
         setError(peer.connectionState === 'failed' ? 'Call connection failed.' : '');
       }
+    };
+    peer.oniceconnectionstatechange = () => {
+      logCall('iceConnectionState', peer.iceConnectionState);
+    };
+    peer.onsignalingstatechange = () => {
+      logCall('signalingState', peer.signalingState);
     };
     peerRef.current = peer;
     return peer;
@@ -96,6 +105,7 @@ export function CallProvider({ children }) {
     setLocalStream(stream);
     setMuted(false);
     setCameraOff(callType !== 'VIDEO');
+    logCall('local stream ready', stream);
     return stream;
   }, []);
 
@@ -108,7 +118,7 @@ export function CallProvider({ children }) {
 
   const applyPendingIce = async (peer) => {
     for (const candidate of pendingRemoteIceRef.current) {
-      await peer.addIceCandidate(candidate).catch(() => {});
+      await peer.addIceCandidate(candidate).then(() => logCall('ICE candidate received', candidate)).catch(() => {});
     }
     pendingRemoteIceRef.current = [];
   };
@@ -123,8 +133,9 @@ export function CallProvider({ children }) {
       setError('This browser does not support WebRTC media calls.');
       return;
     }
+    const receiverUid = receiver.firebaseUid || receiver.uid || receiver.userId || '';
     const { data } = await api.post('/calls/start', { receiverId: receiver.id, type: callType });
-    const nextCall = { ...data, callType, peerId: receiver.id, peer: receiver, direction: 'outgoing', status: 'RINGING' };
+    const nextCall = { ...data, callType, peerId: receiver.id, peerUid: receiverUid, peer: receiver, direction: 'outgoing', status: 'RINGING' };
     activeRef.current = nextCall;
     setActiveCall(nextCall);
     const stream = await openMedia(callType);
@@ -136,12 +147,14 @@ export function CallProvider({ children }) {
     const requestSignal = {
       callId: data.id,
       receiverId: receiver.id,
+      receiverUid: receiverUid || undefined,
       callType,
       payload: { callerName: 'Incoming call', description: offer }
     };
     const offerSignal = {
       callId: data.id,
       receiverId: receiver.id,
+      receiverUid: receiverUid || undefined,
       callType,
       payload: { description: offer }
     };
@@ -167,6 +180,7 @@ export function CallProvider({ children }) {
       id: incomingCall.callId,
       callType: incomingCall.callType || 'AUDIO',
       peerId: incomingCall.senderId,
+      peerUid: incomingCall.senderUid || '',
       peer: { id: incomingCall.senderId, name: incomingCall.senderName },
       direction: 'incoming',
       status: 'ACTIVE'
@@ -190,6 +204,7 @@ export function CallProvider({ children }) {
         await sendSignal('answer', {
           callId: incomingCall.callId,
           receiverId: incomingCall.senderId,
+          receiverUid: incomingCall.senderUid || undefined,
           callType: nextCall.callType,
           payload: { description: answer }
         });
@@ -199,6 +214,7 @@ export function CallProvider({ children }) {
     await sendSignal('call-accept', {
       callId: incomingCall.callId,
       receiverId: incomingCall.senderId,
+      receiverUid: incomingCall.senderUid || undefined,
       callType: nextCall.callType
     });
   }, [clearCallRequestRetry, ensurePeer, incomingCall, openMedia, sendSignal]);
@@ -209,6 +225,7 @@ export function CallProvider({ children }) {
     await sendSignal('call-reject', {
       callId: incomingCall.callId,
       receiverId: incomingCall.senderId,
+      receiverUid: incomingCall.senderUid || undefined,
       callType: incomingCall.callType
     });
     setIncomingCall(null);
@@ -221,6 +238,7 @@ export function CallProvider({ children }) {
     await sendSignal('call-end', {
       callId: call.id,
       receiverId: call.peerId,
+      receiverUid: call.peerUid || undefined,
       callType: call.callType
     });
     await api.post(`/calls/${call.id}/end`, null, { params: { status } }).catch(() => {});
@@ -253,17 +271,20 @@ export function CallProvider({ children }) {
     if (signal.type === 'call-accept') {
       const call = activeRef.current;
       if (!call) return;
+      const callWithUid = { ...call, peerUid: signal.senderUid || call.peerUid };
+      activeRef.current = callWithUid;
       clearCallRequestRetry();
       const peer = ensurePeer(call.peerId);
       if (peer.localDescription) {
         logCall('offer sent', peer.localDescription);
         await sendSignal('offer', {
-          callId: call.id,
-          receiverId: call.peerId,
-          callType: call.callType,
+          callId: callWithUid.id,
+          receiverId: callWithUid.peerId,
+          receiverUid: callWithUid.peerUid || undefined,
+          callType: callWithUid.callType,
           payload: { description: peer.localDescription }
         });
-        const active = { ...call, status: 'ACTIVE' };
+        const active = { ...callWithUid, status: 'ACTIVE' };
         activeRef.current = active;
         setActiveCall(active);
         return;
@@ -272,12 +293,13 @@ export function CallProvider({ children }) {
       await peer.setLocalDescription(offer);
       logCall('offer sent', offer);
       await sendSignal('offer', {
-        callId: call.id,
-        receiverId: call.peerId,
-        callType: call.callType,
+        callId: callWithUid.id,
+        receiverId: callWithUid.peerId,
+        receiverUid: callWithUid.peerUid || undefined,
+        callType: callWithUid.callType,
         payload: { description: offer }
       });
-      const active = { ...call, status: 'ACTIVE' };
+      const active = { ...callWithUid, status: 'ACTIVE' };
       activeRef.current = active;
       setActiveCall(active);
       return;
@@ -293,6 +315,7 @@ export function CallProvider({ children }) {
         }));
         return;
       }
+      activeRef.current = { ...activeRef.current, peerUid: signal.senderUid || activeRef.current.peerUid };
       if (peer.signalingState !== 'stable') return;
       await peer.setRemoteDescription(signal.payload.description);
       await applyPendingIce(peer);
@@ -302,6 +325,7 @@ export function CallProvider({ children }) {
       await sendSignal('answer', {
         callId: signal.callId,
         receiverId: signal.senderId,
+        receiverUid: signal.senderUid || undefined,
         callType: signal.callType,
         payload: { description: answer }
       });
@@ -312,14 +336,14 @@ export function CallProvider({ children }) {
       await applyPendingIce(peer);
       clearCallRequestRetry();
       if (activeRef.current) {
-        const active = { ...activeRef.current, status: 'ACTIVE' };
+        const active = { ...activeRef.current, peerUid: signal.senderUid || activeRef.current.peerUid, status: 'ACTIVE' };
         activeRef.current = active;
         setActiveCall(active);
       }
     } else if (signal.type === 'ice-candidate' && signal.payload?.candidate) {
       logCall('ICE candidate received', signal.payload.candidate);
       if (peer.remoteDescription) {
-        await peer.addIceCandidate(signal.payload.candidate).catch(() => {});
+        await peer.addIceCandidate(signal.payload.candidate).then(() => logCall('ICE candidate received', signal.payload.candidate)).catch(() => {});
       } else {
         pendingRemoteIceRef.current.push(signal.payload.candidate);
       }

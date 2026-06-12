@@ -39,7 +39,11 @@ public class SignalingController {
         var sender = newestFirst(users.findAllByFirebaseUid(principal.getName())).stream().findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Caller profile not found"));
         var receiver = resolveReceiver(message);
-        log.info("WebRTC signal {} call={} from={} to={}", type, message.callId(), sender.getId(), receiver.getId());
+        log.info("WebRTC {} received call={} fromUid={} fromId={} toUid={} toId={}",
+            type, message.callId(), sender.getFirebaseUid(), sender.getId(), receiver.getFirebaseUid(), receiver.getId());
+        if (receiver.getFirebaseUid() == null || receiver.getFirebaseUid().isBlank()) {
+            throw new IllegalArgumentException("Receiver WebSocket uid not found");
+        }
 
         var outbound = new LinkedHashMap<String, Object>();
         outbound.put("type", type);
@@ -61,18 +65,20 @@ public class SignalingController {
             calls.complete(callPrincipal, message.callId(), CallHistoryStatus.REJECTED);
         } else if ("call-end".equals(type)) {
             calls.complete(callPrincipal, message.callId(), CallHistoryStatus.COMPLETED);
+            log.info("WebRTC call ended call={} fromUid={} toUid={}", message.callId(), sender.getFirebaseUid(), receiver.getFirebaseUid());
         }
 
         messaging.convertAndSend("/topic/signaling/" + receiver.getFirebaseUid(), outbound);
+        log.info("WebRTC {} sent call={} topic=/topic/signaling/{}", type, outbound.get("callId"), receiver.getFirebaseUid());
     }
 
     private com.loveconnect.mongoapp.model.UserProfile resolveReceiver(CallSignalMessage message) {
-        if (message.receiverId() != null && !message.receiverId().isBlank()) {
-            return users.findById(message.receiverId())
-                .orElseThrow(() -> new IllegalArgumentException("Receiver profile not found"));
-        }
         if (message.receiverUid() != null && !message.receiverUid().isBlank()) {
             return newestFirst(users.findAllByFirebaseUid(message.receiverUid())).stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Receiver profile not found"));
+        }
+        if (message.receiverId() != null && !message.receiverId().isBlank()) {
+            return users.findById(message.receiverId())
                 .orElseThrow(() -> new IllegalArgumentException("Receiver profile not found"));
         }
         throw new IllegalArgumentException("Receiver is required");

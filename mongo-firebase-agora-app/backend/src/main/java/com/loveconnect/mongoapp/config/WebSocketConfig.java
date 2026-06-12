@@ -2,6 +2,8 @@ package com.loveconnect.mongoapp.config;
 
 import java.util.Arrays;
 import com.loveconnect.mongoapp.security.FirebaseTokenService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -19,6 +21,7 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    private static final Logger log = LoggerFactory.getLogger(WebSocketConfig.class);
     private final String[] allowedOrigins;
     private final FirebaseTokenService tokenService;
 
@@ -51,6 +54,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     }
                     var principal = tokenService.verify(auth.substring(7));
                     accessor.setUser(principal::uid);
+                    log.info("WebSocket connected uid={}", principal.uid());
                 }
                 return message;
             }

@@ -2,8 +2,19 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { API_ORIGIN } from './api.js';
 
+const turnServer = import.meta.env.VITE_TURN_URL
+  ? {
+      urls: import.meta.env.VITE_TURN_URL,
+      username: import.meta.env.VITE_TURN_USERNAME || undefined,
+      credential: import.meta.env.VITE_TURN_CREDENTIAL || undefined
+    }
+  : null;
+
 export const rtcConfig = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    ...(turnServer ? [turnServer] : [])
+  ]
 };
 
 export const createPeer = () => new RTCPeerConnection(rtcConfig);
@@ -14,10 +25,13 @@ export const createSignalClient = ({ token, uid, onSignal }) => {
     connectHeaders: { Authorization: `Bearer ${token}` },
     reconnectDelay: 3000,
     onConnect: () => {
+      console.log('[LoveConnect Call] WebSocket connected', uid);
       client.subscribe(`/topic/signaling/${uid}`, (message) => {
         onSignal(JSON.parse(message.body));
       });
-    }
+    },
+    onStompError: (frame) => console.error('[LoveConnect Call] WebSocket STOMP error', frame.headers?.message || frame.body),
+    onWebSocketClose: () => console.warn('[LoveConnect Call] WebSocket closed')
   });
   client.activate();
   return client;
