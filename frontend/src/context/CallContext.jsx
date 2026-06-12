@@ -139,7 +139,14 @@ export function CallProvider({ children }) {
       callType,
       payload: { callerName: 'Incoming call', description: offer }
     };
+    const offerSignal = {
+      callId: data.id,
+      receiverId: receiver.id,
+      callType,
+      payload: { description: offer }
+    };
     await sendSignal('call-request', requestSignal);
+    await sendSignal('offer', offerSignal);
     clearCallRequestRetry();
     callRequestRetryRef.current = window.setInterval(() => {
       const current = activeRef.current;
@@ -149,6 +156,7 @@ export function CallProvider({ children }) {
       }
       logCall('offer sent', offer);
       sendSignal('call-request', requestSignal);
+      sendSignal('offer', offerSignal);
     }, 2000);
   }, [clearCallRequestRetry, ensurePeer, openMedia, sendSignal]);
 
