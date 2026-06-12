@@ -21,6 +21,7 @@ export function CallProvider({ children }) {
   const handledIncomingRef = useRef(new Set());
   const pendingRemoteIceRef = useRef([]);
   const activeRef = useRef(null);
+  const callRequestRetryRef = useRef(null);
 
   const token = localStorage.getItem('loveconnect_token') || sessionStorage.getItem('loveconnect_token');
   const uid = appUidFromToken(token);
@@ -51,6 +52,13 @@ export function CallProvider({ children }) {
     peerRef.current?.close();
     peerRef.current = null;
     pendingRemoteIceRef.current = [];
+  }, []);
+
+  const clearCallRequestRetry = useCallback(() => {
+    if (callRequestRetryRef.current) {
+      window.clearInterval(callRequestRetryRef.current);
+      callRequestRetryRef.current = null;
+    }
   }, []);
 
   const ensurePeer = useCallback((receiverId) => {
@@ -125,13 +133,24 @@ export function CallProvider({ children }) {
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     logCall('offer sent', offer);
-    await sendSignal('call-request', {
+    const requestSignal = {
       callId: data.id,
       receiverId: receiver.id,
       callType,
       payload: { callerName: 'Incoming call', description: offer }
-    });
-  }, [ensurePeer, openMedia, sendSignal]);
+    };
+    await sendSignal('call-request', requestSignal);
+    clearCallRequestRetry();
+    callRequestRetryRef.current = window.setInterval(() => {
+      const current = activeRef.current;
+      if (!current || current.id !== data.id || current.status !== 'RINGING' || peer.remoteDescription) {
+        clearCallRequestRetry();
+        return;
+      }
+      logCall('offer sent', offer);
+      sendSignal('call-request', requestSignal);
+    }, 2000);
+  }, [clearCallRequestRetry, ensurePeer, openMedia, sendSignal]);
 
   const acceptCall = useCallback(async () => {
     if (!incomingCall) return;
@@ -148,6 +167,7 @@ export function CallProvider({ children }) {
     activeRef.current = nextCall;
     setActiveCall(nextCall);
     setIncomingCall(null);
+    clearCallRequestRetry();
     const stream = await openMedia(nextCall.callType);
     const peer = ensurePeer(incomingCall.senderId);
     attachLocalTracks(peer, stream);
@@ -173,7 +193,7 @@ export function CallProvider({ children }) {
       receiverId: incomingCall.senderId,
       callType: nextCall.callType
     });
-  }, [ensurePeer, incomingCall, openMedia, sendSignal]);
+  }, [clearCallRequestRetry, ensurePeer, incomingCall, openMedia, sendSignal]);
 
   const rejectCall = useCallback(async () => {
     if (!incomingCall) return;
@@ -189,6 +209,7 @@ export function CallProvider({ children }) {
   const endCall = useCallback(async (status = 'COMPLETED') => {
     const call = activeRef.current;
     if (!call) return;
+    clearCallRequestRetry();
     await sendSignal('call-end', {
       callId: call.id,
       receiverId: call.peerId,
@@ -198,7 +219,7 @@ export function CallProvider({ children }) {
     activeRef.current = null;
     setActiveCall(null);
     stopMedia();
-  }, [sendSignal, stopMedia]);
+  }, [clearCallRequestRetry, sendSignal, stopMedia]);
 
   const handleSignal = useCallback(async (signal) => {
     if (signal.type === 'call-request') {
@@ -208,6 +229,7 @@ export function CallProvider({ children }) {
     }
     if (signal.type === 'call-reject') {
       setError('Call rejected.');
+      clearCallRequestRetry();
       activeRef.current = null;
       setActiveCall(null);
       stopMedia();
@@ -215,6 +237,7 @@ export function CallProvider({ children }) {
     }
     if (signal.type === 'call-end') {
       activeRef.current = null;
+      clearCallRequestRetry();
       setActiveCall(null);
       stopMedia();
       return;
@@ -222,6 +245,7 @@ export function CallProvider({ children }) {
     if (signal.type === 'call-accept') {
       const call = activeRef.current;
       if (!call) return;
+      clearCallRequestRetry();
       const peer = ensurePeer(call.peerId);
       if (peer.localDescription) {
         logCall('offer sent', peer.localDescription);
@@ -231,7 +255,9 @@ export function CallProvider({ children }) {
           callType: call.callType,
           payload: { description: peer.localDescription }
         });
-        setActiveCall({ ...call, status: 'ACTIVE' });
+        const active = { ...call, status: 'ACTIVE' };
+        activeRef.current = active;
+        setActiveCall(active);
         return;
       }
       const offer = await peer.createOffer();
@@ -243,12 +269,22 @@ export function CallProvider({ children }) {
         callType: call.callType,
         payload: { description: offer }
       });
-      setActiveCall({ ...call, status: 'ACTIVE' });
+      const active = { ...call, status: 'ACTIVE' };
+      activeRef.current = active;
+      setActiveCall(active);
       return;
     }
     const peer = ensurePeer(signal.senderId);
     if (signal.type === 'offer') {
       logCall('offer received', signal.payload?.description);
+      if (!activeRef.current) {
+        setIncomingCall((current) => ({
+          ...(current || signal),
+          ...signal,
+          payload: { ...(current?.payload || {}), ...(signal.payload || {}) }
+        }));
+        return;
+      }
       if (peer.signalingState !== 'stable') return;
       await peer.setRemoteDescription(signal.payload.description);
       await applyPendingIce(peer);
@@ -266,6 +302,12 @@ export function CallProvider({ children }) {
       if (peer.signalingState !== 'have-local-offer') return;
       await peer.setRemoteDescription(signal.payload.description);
       await applyPendingIce(peer);
+      clearCallRequestRetry();
+      if (activeRef.current) {
+        const active = { ...activeRef.current, status: 'ACTIVE' };
+        activeRef.current = active;
+        setActiveCall(active);
+      }
     } else if (signal.type === 'ice-candidate' && signal.payload?.candidate) {
       logCall('ICE candidate received', signal.payload.candidate);
       if (peer.remoteDescription) {
@@ -274,16 +316,17 @@ export function CallProvider({ children }) {
         pendingRemoteIceRef.current.push(signal.payload.candidate);
       }
     }
-  }, [ensurePeer, sendSignal, stopMedia]);
+  }, [clearCallRequestRetry, ensurePeer, sendSignal, stopMedia]);
 
   useEffect(() => {
     if (!token || !uid) return undefined;
     signalRef.current = createSignalClient({ token, uid, onSignal: handleSignal });
     return () => {
+      clearCallRequestRetry();
       signalRef.current?.deactivate();
       signalRef.current = null;
     };
-  }, [handleSignal, token, uid]);
+  }, [clearCallRequestRetry, handleSignal, token, uid]);
 
   useEffect(() => {
     if (!token || !uid) return undefined;
