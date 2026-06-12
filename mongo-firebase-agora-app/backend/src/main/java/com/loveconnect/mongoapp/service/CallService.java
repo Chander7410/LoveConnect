@@ -40,7 +40,7 @@ public class CallService {
         call.setCallerId(caller.getId());
         call.setReceiverId(receiver.getId());
         call.setCallType(type == null ? CallType.AUDIO : type);
-        call.setStatus(CallHistoryStatus.MISSED);
+        call.setStatus(CallHistoryStatus.RINGING);
         call.setStartTime(Instant.now());
         return calls.save(call);
     }
@@ -58,6 +58,14 @@ public class CallService {
     public List<CallHistory> history(FirebasePrincipal principal) {
         var profile = currentProfile(principal);
         return calls.findByCallerIdOrReceiverIdOrderByStartTimeDesc(profile.getId(), profile.getId());
+    }
+
+    public List<CallHistory> incoming(FirebasePrincipal principal) {
+        var profile = currentProfile(principal);
+        var recentCutoff = Instant.now().minusSeconds(90);
+        return calls.findByReceiverIdAndStatusOrderByStartTimeDesc(profile.getId(), CallHistoryStatus.RINGING).stream()
+            .filter(call -> call.getStartTime() != null && call.getStartTime().isAfter(recentCutoff))
+            .toList();
     }
 
     public Map<String, Object> toResponse(CallHistory call) {

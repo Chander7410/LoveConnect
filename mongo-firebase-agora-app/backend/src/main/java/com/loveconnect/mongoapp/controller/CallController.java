@@ -50,4 +50,9 @@ public class CallController {
     public List<Map<String, Object>> history() {
         return calls.history(security.currentUser()).stream().map(calls::toResponse).toList();
     }
+
+    @GetMapping("/incoming")
+    public List<Map<String, Object>> incoming() {
+        return calls.incoming(security.currentUser()).stream().map(calls::toResponse).toList();
+    }
 }

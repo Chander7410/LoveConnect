@@ -7,8 +7,12 @@ import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import com.loveconnect.mongoapp.security.FirebasePrincipal;
 import com.loveconnect.mongoapp.service.CallService;
 import java.security.Principal;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class SignalingController {
+    private static final Logger log = LoggerFactory.getLogger(SignalingController.class);
     private final SimpMessagingTemplate messaging;
     private final UserProfileRepository users;
     private final CallService calls;
@@ -31,9 +36,10 @@ public class SignalingController {
         if (principal == null) {
             throw new IllegalArgumentException("Login is required before calling");
         }
-        var sender = users.findAllByFirebaseUid(principal.getName()).stream().findFirst()
+        var sender = newestFirst(users.findAllByFirebaseUid(principal.getName())).stream().findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Caller profile not found"));
         var receiver = resolveReceiver(message);
+        log.info("WebRTC signal {} call={} from={} to={}", type, message.callId(), sender.getId(), receiver.getId());
 
         var outbound = new LinkedHashMap<String, Object>();
         outbound.put("type", type);
@@ -66,9 +72,17 @@ public class SignalingController {
                 .orElseThrow(() -> new IllegalArgumentException("Receiver profile not found"));
         }
         if (message.receiverUid() != null && !message.receiverUid().isBlank()) {
-            return users.findAllByFirebaseUid(message.receiverUid()).stream().findFirst()
+            return newestFirst(users.findAllByFirebaseUid(message.receiverUid())).stream().findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Receiver profile not found"));
         }
         throw new IllegalArgumentException("Receiver is required");
+    }
+
+    private List<com.loveconnect.mongoapp.model.UserProfile> newestFirst(List<com.loveconnect.mongoapp.model.UserProfile> profiles) {
+        return profiles.stream()
+            .sorted(Comparator
+                .comparing(com.loveconnect.mongoapp.model.UserProfile::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(com.loveconnect.mongoapp.model.UserProfile::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+            .toList();
     }
 }
