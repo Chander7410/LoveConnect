@@ -120,7 +120,8 @@ public class CallService {
         item.put("email", user.getEmail());
         item.put("gender", user.getGender());
         item.put("location", user.getLocation());
-        item.put("profilePictureUrl", user.getPhotoUrl());
+        var photoUrl = user.getPhotoUrl();
+        item.put("profilePictureUrl", photoUrl != null && photoUrl.startsWith("data:") ? null : photoUrl);
         return item;
     }
 

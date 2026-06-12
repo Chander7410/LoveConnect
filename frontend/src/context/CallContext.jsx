@@ -163,7 +163,6 @@ export function CallProvider({ children }) {
   const acceptCall = useCallback(async () => {
     if (!incomingCall) return;
     setError('');
-    await api.post(`/calls/${incomingCall.callId}/accept`);
     const nextCall = {
       id: incomingCall.callId,
       callType: incomingCall.callType || 'AUDIO',
@@ -196,6 +195,7 @@ export function CallProvider({ children }) {
         });
       }
     }
+    api.post(`/calls/${incomingCall.callId}/accept`).catch(() => {});
     await sendSignal('call-accept', {
       callId: incomingCall.callId,
       receiverId: incomingCall.senderId,
