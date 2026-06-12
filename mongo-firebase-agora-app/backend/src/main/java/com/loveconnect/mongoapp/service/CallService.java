@@ -57,7 +57,7 @@ public class CallService {
 
     public List<CallHistory> history(FirebasePrincipal principal) {
         var profileIds = currentProfileIds(principal);
-        return calls.findByCallerIdInOrReceiverIdInOrderByStartTimeDesc(profileIds, profileIds);
+        return calls.findTop20ByCallerIdInOrReceiverIdInOrderByStartTimeDesc(profileIds, profileIds);
     }
 
     public List<CallHistory> incoming(FirebasePrincipal principal) {
