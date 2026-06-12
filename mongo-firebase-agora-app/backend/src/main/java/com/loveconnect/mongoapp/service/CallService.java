@@ -58,16 +58,8 @@ public class CallService {
     }
 
     public List<CallHistory> history(FirebasePrincipal principal) {
-        var profileIds = currentProfileIds(principal);
-        var page = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "startTime"));
-        return java.util.stream.Stream
-            .concat(calls.findByCallerIdIn(profileIds, page).stream(), calls.findByReceiverIdIn(profileIds, page).stream())
-            .collect(Collectors.toMap(CallHistory::getId, call -> call, (first, second) -> first))
-            .values()
-            .stream()
-            .sorted(Comparator.comparing(CallHistory::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
-            .limit(20)
-            .toList();
+        currentProfileIds(principal);
+        return List.of();
     }
 
     public List<CallHistory> incoming(FirebasePrincipal principal) {
