@@ -56,14 +56,14 @@ public class CallService {
     }
 
     public List<CallHistory> history(FirebasePrincipal principal) {
-        var profile = currentProfile(principal);
-        return calls.findByCallerIdOrReceiverIdOrderByStartTimeDesc(profile.getId(), profile.getId());
+        var profileIds = currentProfileIds(principal);
+        return calls.findByCallerIdInOrReceiverIdInOrderByStartTimeDesc(profileIds, profileIds);
     }
 
     public List<CallHistory> incoming(FirebasePrincipal principal) {
-        var profile = currentProfile(principal);
+        var profileIds = currentProfileIds(principal);
         var recentCutoff = Instant.now().minusSeconds(90);
-        return calls.findByReceiverIdAndStatusOrderByStartTimeDesc(profile.getId(), CallHistoryStatus.RINGING).stream()
+        return calls.findByReceiverIdInAndStatusOrderByStartTimeDesc(profileIds, CallHistoryStatus.RINGING).stream()
             .filter(call -> call.getStartTime() != null && call.getStartTime().isAfter(recentCutoff))
             .toList();
     }
@@ -86,10 +86,10 @@ public class CallService {
     }
 
     private CallHistory findParticipantCall(FirebasePrincipal principal, String callId) {
-        var profile = currentProfile(principal);
+        var profileIds = currentProfileIds(principal);
         var call = calls.findById(callId == null ? "" : callId)
             .orElseThrow(() -> new IllegalArgumentException("Call not found"));
-        if (!profile.getId().equals(call.getCallerId()) && !profile.getId().equals(call.getReceiverId())) {
+        if (!profileIds.contains(call.getCallerId()) && !profileIds.contains(call.getReceiverId())) {
             throw new SecurityException("You are not part of this call");
         }
         return call;
@@ -139,12 +139,27 @@ public class CallService {
     }
 
     private UserProfile currentProfile(FirebasePrincipal principal) {
+        return currentProfiles(principal).stream()
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Current profile not found"));
+    }
+
+    private List<UserProfile> currentProfiles(FirebasePrincipal principal) {
         return users.findAllByFirebaseUid(principal.uid()).stream()
             .sorted(Comparator
                 .comparing(UserProfile::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(UserProfile::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Current profile not found"));
+            .toList();
+    }
+
+    private List<String> currentProfileIds(FirebasePrincipal principal) {
+        var profileIds = currentProfiles(principal).stream()
+            .map(UserProfile::getId)
+            .toList();
+        if (profileIds.isEmpty()) {
+            throw new IllegalArgumentException("Current profile not found");
+        }
+        return profileIds;
     }
 
     private String conversationId(String firstUid, String secondUid) {

@@ -6,6 +6,7 @@ const CallContext = createContext(null);
 const logCall = (message, detail = '') => {
   console.log(`[LoveConnect Call] ${message}`, detail);
 };
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 export function CallProvider({ children }) {
   const [incomingCall, setIncomingCall] = useState(null);
@@ -24,6 +25,23 @@ export function CallProvider({ children }) {
   const token = localStorage.getItem('loveconnect_token') || sessionStorage.getItem('loveconnect_token');
   const uid = appUidFromToken(token);
 
+  const waitForSignalConnection = useCallback(async () => {
+    const deadline = Date.now() + 6000;
+    while (!signalRef.current?.connected && Date.now() < deadline) {
+      await wait(150);
+    }
+    return Boolean(signalRef.current?.connected);
+  }, []);
+
+  const sendSignal = useCallback(async (type, body) => {
+    if (publishSignal(signalRef.current, type, body)) return true;
+    const connected = await waitForSignalConnection();
+    if (connected && publishSignal(signalRef.current, type, body)) return true;
+    logCall('signal not connected', type);
+    setError('Call connection is still starting. Please try again.');
+    return false;
+  }, [waitForSignalConnection]);
+
   const stopMedia = useCallback(() => {
     setLocalStream((stream) => {
       stream?.getTracks().forEach((track) => track.stop());
@@ -41,7 +59,7 @@ export function CallProvider({ children }) {
     peer.onicecandidate = (event) => {
       if (event.candidate && activeRef.current?.peerId) {
         logCall('ICE candidate sent', event.candidate);
-        publishSignal(signalRef.current, 'ice-candidate', {
+        sendSignal('ice-candidate', {
           callId: activeRef.current.id,
           receiverId: activeRef.current.peerId,
           payload: { candidate: event.candidate }
@@ -60,7 +78,7 @@ export function CallProvider({ children }) {
     };
     peerRef.current = peer;
     return peer;
-  }, []);
+  }, [sendSignal]);
 
   const openMedia = useCallback(async (callType) => {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -107,13 +125,13 @@ export function CallProvider({ children }) {
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     logCall('offer sent', offer);
-    publishSignal(signalRef.current, 'call-request', {
+    await sendSignal('call-request', {
       callId: data.id,
       receiverId: receiver.id,
       callType,
       payload: { callerName: 'Incoming call', description: offer }
     });
-  }, [ensurePeer, openMedia]);
+  }, [ensurePeer, openMedia, sendSignal]);
 
   const acceptCall = useCallback(async () => {
     if (!incomingCall) return;
@@ -142,7 +160,7 @@ export function CallProvider({ children }) {
         const answer = await peer.createAnswer();
         await peer.setLocalDescription(answer);
         logCall('answer sent', answer);
-        publishSignal(signalRef.current, 'answer', {
+        await sendSignal('answer', {
           callId: incomingCall.callId,
           receiverId: incomingCall.senderId,
           callType: nextCall.callType,
@@ -150,28 +168,28 @@ export function CallProvider({ children }) {
         });
       }
     }
-    publishSignal(signalRef.current, 'call-accept', {
+    await sendSignal('call-accept', {
       callId: incomingCall.callId,
       receiverId: incomingCall.senderId,
       callType: nextCall.callType
     });
-  }, [ensurePeer, incomingCall, openMedia]);
+  }, [ensurePeer, incomingCall, openMedia, sendSignal]);
 
   const rejectCall = useCallback(async () => {
     if (!incomingCall) return;
     await api.post(`/calls/${incomingCall.callId}/reject`);
-    publishSignal(signalRef.current, 'call-reject', {
+    await sendSignal('call-reject', {
       callId: incomingCall.callId,
       receiverId: incomingCall.senderId,
       callType: incomingCall.callType
     });
     setIncomingCall(null);
-  }, [incomingCall]);
+  }, [incomingCall, sendSignal]);
 
   const endCall = useCallback(async (status = 'COMPLETED') => {
     const call = activeRef.current;
     if (!call) return;
-    publishSignal(signalRef.current, 'call-end', {
+    await sendSignal('call-end', {
       callId: call.id,
       receiverId: call.peerId,
       callType: call.callType
@@ -180,7 +198,7 @@ export function CallProvider({ children }) {
     activeRef.current = null;
     setActiveCall(null);
     stopMedia();
-  }, [stopMedia]);
+  }, [sendSignal, stopMedia]);
 
   const handleSignal = useCallback(async (signal) => {
     if (signal.type === 'call-request') {
@@ -207,7 +225,7 @@ export function CallProvider({ children }) {
       const peer = ensurePeer(call.peerId);
       if (peer.localDescription) {
         logCall('offer sent', peer.localDescription);
-        publishSignal(signalRef.current, 'offer', {
+        await sendSignal('offer', {
           callId: call.id,
           receiverId: call.peerId,
           callType: call.callType,
@@ -219,7 +237,7 @@ export function CallProvider({ children }) {
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
       logCall('offer sent', offer);
-      publishSignal(signalRef.current, 'offer', {
+      await sendSignal('offer', {
         callId: call.id,
         receiverId: call.peerId,
         callType: call.callType,
@@ -237,7 +255,7 @@ export function CallProvider({ children }) {
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
       logCall('answer sent', answer);
-      publishSignal(signalRef.current, 'answer', {
+      await sendSignal('answer', {
         callId: signal.callId,
         receiverId: signal.senderId,
         callType: signal.callType,
@@ -256,7 +274,7 @@ export function CallProvider({ children }) {
         pendingRemoteIceRef.current.push(signal.payload.candidate);
       }
     }
-  }, [ensurePeer, stopMedia]);
+  }, [ensurePeer, sendSignal, stopMedia]);
 
   useEffect(() => {
     if (!token || !uid) return undefined;
