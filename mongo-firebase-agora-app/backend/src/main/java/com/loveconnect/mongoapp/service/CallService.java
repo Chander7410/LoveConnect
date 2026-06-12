@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -57,13 +59,21 @@ public class CallService {
 
     public List<CallHistory> history(FirebasePrincipal principal) {
         var profileIds = currentProfileIds(principal);
-        return calls.findTop20ByCallerIdInOrReceiverIdInOrderByStartTimeDesc(profileIds, profileIds);
+        return calls.findByCallerIdInOrReceiverIdIn(
+            profileIds,
+            profileIds,
+            PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "startTime"))
+        );
     }
 
     public List<CallHistory> incoming(FirebasePrincipal principal) {
         var profileIds = currentProfileIds(principal);
         var recentCutoff = Instant.now().minusSeconds(90);
-        return calls.findByReceiverIdInAndStatusOrderByStartTimeDesc(profileIds, CallHistoryStatus.RINGING).stream()
+        return calls.findByReceiverIdInAndStatus(
+            profileIds,
+            CallHistoryStatus.RINGING,
+            PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "startTime"))
+        ).stream()
             .filter(call -> call.getStartTime() != null && call.getStartTime().isAfter(recentCutoff))
             .toList();
     }
