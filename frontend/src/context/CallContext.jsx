@@ -61,9 +61,9 @@ export function CallProvider({ children }) {
     }
   }, []);
 
-  const ensurePeer = useCallback((receiverId) => {
+  const ensurePeer = useCallback(async (receiverId) => {
     if (peerRef.current) return peerRef.current;
-    const peer = createPeer();
+    const peer = await createPeer();
     peer.onicecandidate = (event) => {
       if (event.candidate && activeRef.current?.peerId) {
         logCall('ICE candidate sent', event.candidate);
@@ -139,7 +139,7 @@ export function CallProvider({ children }) {
     activeRef.current = nextCall;
     setActiveCall(nextCall);
     const stream = await openMedia(callType);
-    const peer = ensurePeer(receiver.id);
+    const peer = await ensurePeer(receiver.id);
     attachLocalTracks(peer, stream);
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
@@ -190,7 +190,7 @@ export function CallProvider({ children }) {
     setIncomingCall(null);
     clearCallRequestRetry();
     const stream = await openMedia(nextCall.callType);
-    const peer = ensurePeer(incomingCall.senderId);
+    const peer = await ensurePeer(incomingCall.senderId);
     attachLocalTracks(peer, stream);
     const offer = incomingCall.payload?.description;
     if (offer) {
@@ -274,7 +274,7 @@ export function CallProvider({ children }) {
       const callWithUid = { ...call, peerUid: signal.senderUid || call.peerUid };
       activeRef.current = callWithUid;
       clearCallRequestRetry();
-      const peer = ensurePeer(call.peerId);
+      const peer = await ensurePeer(call.peerId);
       if (peer.localDescription) {
         logCall('offer sent', peer.localDescription);
         await sendSignal('offer', {
@@ -304,7 +304,7 @@ export function CallProvider({ children }) {
       setActiveCall(active);
       return;
     }
-    const peer = ensurePeer(signal.senderId);
+    const peer = await ensurePeer(signal.senderId);
     if (signal.type === 'offer') {
       logCall('offer received', signal.payload?.description);
       if (!activeRef.current) {

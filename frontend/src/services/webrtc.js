@@ -13,11 +13,34 @@ const turnServer = import.meta.env.VITE_TURN_URL
 export const rtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:openrelay.metered.ca:80' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turns:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
     ...(turnServer ? [turnServer] : [])
   ]
 };
 
-export const createPeer = () => new RTCPeerConnection(rtcConfig);
+const loadIceServers = async () => {
+  const credentialsUrl = import.meta.env.VITE_TURN_CREDENTIALS_URL;
+  if (!credentialsUrl) return rtcConfig.iceServers;
+  try {
+    const response = await fetch(credentialsUrl);
+    if (!response.ok) throw new Error(`TURN credentials request failed: ${response.status}`);
+    const iceServers = await response.json();
+    if (!Array.isArray(iceServers) || iceServers.length === 0) throw new Error('TURN credentials response is empty');
+    console.log('[LoveConnect Call] TURN/STUN iceServers loaded', iceServers.map((server) => server.urls));
+    return iceServers;
+  } catch (error) {
+    console.warn('[LoveConnect Call] TURN credentials unavailable; falling back to configured STUN/TURN', error);
+    return rtcConfig.iceServers;
+  }
+};
+
+export const createPeer = async () => new RTCPeerConnection({
+  iceServers: await loadIceServers()
+});
 
 export const createSignalClient = ({ token, uid, onSignal }) => {
   const client = new Client({
