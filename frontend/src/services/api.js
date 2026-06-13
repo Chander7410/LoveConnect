@@ -8,7 +8,7 @@ const normalizeApiUrl = (url) => {
 
 const isLocalFrontend = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const isVercelFrontend = typeof window !== 'undefined' && window.location.hostname === 'love-connect-beta.vercel.app';
-const runtimeApiUrl = typeof window !== 'undefined' && !isVercelFrontend ? localStorage.getItem('loveconnect_api_url') : '';
+const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('loveconnect_api_url') : '';
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
