@@ -12,7 +12,7 @@ const runtimeApiUrl = typeof window !== 'undefined' && !isVercelFrontend ? local
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
-    ? 'https://loveconnect-mddv.onrender.com/api'
+    ? 'https://loveconnectbackend-3k72hrh9.b4a.run/api'
     : '';
 
 export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
