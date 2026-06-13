@@ -12,7 +12,7 @@ const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('love
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
-    ? 'https://rear-dolls-seriously-precious.trycloudflare.com/api'
+    ? 'https://kennedy-briefly-replaced-planner.trycloudflare.com/api'
     : '';
 
 export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
