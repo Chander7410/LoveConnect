@@ -266,7 +266,12 @@ export function CallProvider({ children }) {
   const handleSignal = useCallback(async (signal) => {
     if (signal.type === 'call-request') {
       handledIncomingRef.current.add(signal.callId);
-      setIncomingCall(signal);
+      const pendingOffer = pendingOffersRef.current.get(signal.callId);
+      const nextIncoming = pendingOffer
+        ? { ...signal, payload: { ...(signal.payload || {}), ...(pendingOffer.payload || {}) } }
+        : signal;
+      logCall('incoming call request received', signal.callId);
+      setIncomingCall(nextIncoming);
       return;
     }
     if (signal.type === 'call-reject') {
@@ -320,11 +325,11 @@ export function CallProvider({ children }) {
       setActiveCall(active);
       return;
     }
-    const peer = await ensurePeer(signal.senderId);
     if (signal.type === 'offer') {
       logCall('offer received', signal.payload?.description);
       pendingOffersRef.current.set(signal.callId, signal);
       if (!activeRef.current) {
+        logCall('incoming offer queued', signal.callId);
         setIncomingCall((current) => ({
           ...(current || signal),
           ...signal,
@@ -337,6 +342,7 @@ export function CallProvider({ children }) {
         await answerIncomingOffer(signal);
       }
     } else if (signal.type === 'answer') {
+      const peer = await ensurePeer(signal.senderId);
       logCall('answer received', signal.payload?.description);
       if (peer.signalingState !== 'have-local-offer') return;
       await peer.setRemoteDescription(signal.payload.description);
@@ -348,6 +354,7 @@ export function CallProvider({ children }) {
         setActiveCall(active);
       }
     } else if (signal.type === 'ice-candidate' && signal.payload?.candidate) {
+      const peer = await ensurePeer(signal.senderId);
       logCall('ICE candidate received', signal.payload.candidate);
       if (peer.remoteDescription) {
         await peer.addIceCandidate(signal.payload.candidate).then(() => logCall('ICE candidate received', signal.payload.candidate)).catch(() => {});
