@@ -7,12 +7,24 @@ const turnServer = import.meta.env.VITE_TURN_URL
       urls: import.meta.env.VITE_TURN_URL,
       username: import.meta.env.VITE_TURN_USERNAME || undefined,
       credential: import.meta.env.VITE_TURN_CREDENTIAL || undefined
-    }
+  }
   : null;
+
+const meteredTurnCredential = {
+  username: '49d1ee84361e0e0f0b55ec2d',
+  credential: 'VW1TsEgIT3CsX3Hb'
+};
 
 export const rtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:global.stun.twilio.com:3478' },
+    { urls: 'stun:stun.relay.metered.ca:80' },
+    { urls: 'turn:global.relay.metered.ca:80', ...meteredTurnCredential },
+    { urls: 'turn:global.relay.metered.ca:80?transport=tcp', ...meteredTurnCredential },
+    { urls: 'turn:global.relay.metered.ca:443', ...meteredTurnCredential },
+    { urls: 'turn:global.relay.metered.ca:443?transport=tcp', ...meteredTurnCredential },
+    { urls: 'turns:global.relay.metered.ca:443?transport=tcp', ...meteredTurnCredential },
     { urls: 'stun:openrelay.metered.ca:80' },
     { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
     { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
