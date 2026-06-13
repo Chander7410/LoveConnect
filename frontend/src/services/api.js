@@ -12,7 +12,7 @@ const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('love
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
-    ? 'https://loveconnectbackend-3k72hrh9.b4a.run/api'
+    ? 'https://rear-dolls-seriously-precious.trycloudflare.com/api'
     : '';
 
 export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
