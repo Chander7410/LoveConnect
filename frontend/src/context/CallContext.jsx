@@ -19,6 +19,7 @@ export function CallProvider({ children }) {
   const peerRef = useRef(null);
   const signalRef = useRef(null);
   const handledIncomingRef = useRef(new Set());
+  const pendingOffersRef = useRef(new Map());
   const pendingRemoteIceRef = useRef([]);
   const activeRef = useRef(null);
   const callRequestRetryRef = useRef(null);
@@ -51,6 +52,7 @@ export function CallProvider({ children }) {
     setRemoteStream(null);
     peerRef.current?.close();
     peerRef.current = null;
+    pendingOffersRef.current.clear();
     pendingRemoteIceRef.current = [];
   }, []);
 
@@ -123,6 +125,31 @@ export function CallProvider({ children }) {
     pendingRemoteIceRef.current = [];
   };
 
+  const answerIncomingOffer = useCallback(async (signal) => {
+    const current = activeRef.current;
+    if (!signal?.payload?.description || !current || current.id !== signal.callId) return false;
+    const peer = await ensurePeer(signal.senderId || current.peerId);
+    if (peer.signalingState !== 'stable') {
+      logCall('offer received while signaling not stable', peer.signalingState);
+      return false;
+    }
+    logCall('offer received', signal.payload.description);
+    await peer.setRemoteDescription(signal.payload.description);
+    await applyPendingIce(peer);
+    const answer = await peer.createAnswer();
+    await peer.setLocalDescription(answer);
+    logCall('answer sent', answer);
+    await sendSignal('answer', {
+      callId: signal.callId,
+      receiverId: signal.senderId || current.peerId,
+      receiverUid: signal.senderUid || current.peerUid || undefined,
+      callType: signal.callType || current.callType,
+      payload: { description: answer }
+    });
+    pendingOffersRef.current.delete(signal.callId);
+    return true;
+  }, [ensurePeer, sendSignal]);
+
   const startCall = useCallback(async (receiver, callType) => {
     setError('');
     if (!receiver?.id) {
@@ -192,24 +219,6 @@ export function CallProvider({ children }) {
     const stream = await openMedia(nextCall.callType);
     const peer = await ensurePeer(incomingCall.senderId);
     attachLocalTracks(peer, stream);
-    const offer = incomingCall.payload?.description;
-    if (offer) {
-      logCall('offer received', offer);
-      if (peer.signalingState === 'stable') {
-        await peer.setRemoteDescription(offer);
-        await applyPendingIce(peer);
-        const answer = await peer.createAnswer();
-        await peer.setLocalDescription(answer);
-        logCall('answer sent', answer);
-        await sendSignal('answer', {
-          callId: incomingCall.callId,
-          receiverId: incomingCall.senderId,
-          receiverUid: incomingCall.senderUid || undefined,
-          callType: nextCall.callType,
-          payload: { description: answer }
-        });
-      }
-    }
     api.post(`/calls/${incomingCall.callId}/accept`).catch(() => {});
     await sendSignal('call-accept', {
       callId: incomingCall.callId,
@@ -217,7 +226,14 @@ export function CallProvider({ children }) {
       receiverUid: incomingCall.senderUid || undefined,
       callType: nextCall.callType
     });
-  }, [clearCallRequestRetry, ensurePeer, incomingCall, openMedia, sendSignal]);
+    const pendingOffer = pendingOffersRef.current.get(incomingCall.callId);
+    const offerSignal = incomingCall.payload?.description ? incomingCall : pendingOffer;
+    if (offerSignal) {
+      await answerIncomingOffer(offerSignal);
+    } else {
+      logCall('call accepted; waiting for offer', incomingCall.callId);
+    }
+  }, [answerIncomingOffer, clearCallRequestRetry, ensurePeer, incomingCall, openMedia, sendSignal]);
 
   const rejectCall = useCallback(async () => {
     if (!incomingCall) return;
@@ -307,6 +323,7 @@ export function CallProvider({ children }) {
     const peer = await ensurePeer(signal.senderId);
     if (signal.type === 'offer') {
       logCall('offer received', signal.payload?.description);
+      pendingOffersRef.current.set(signal.callId, signal);
       if (!activeRef.current) {
         setIncomingCall((current) => ({
           ...(current || signal),
@@ -316,19 +333,9 @@ export function CallProvider({ children }) {
         return;
       }
       activeRef.current = { ...activeRef.current, peerUid: signal.senderUid || activeRef.current.peerUid };
-      if (peer.signalingState !== 'stable') return;
-      await peer.setRemoteDescription(signal.payload.description);
-      await applyPendingIce(peer);
-      const answer = await peer.createAnswer();
-      await peer.setLocalDescription(answer);
-      logCall('answer sent', answer);
-      await sendSignal('answer', {
-        callId: signal.callId,
-        receiverId: signal.senderId,
-        receiverUid: signal.senderUid || undefined,
-        callType: signal.callType,
-        payload: { description: answer }
-      });
+      if (activeRef.current.direction === 'incoming') {
+        await answerIncomingOffer(signal);
+      }
     } else if (signal.type === 'answer') {
       logCall('answer received', signal.payload?.description);
       if (peer.signalingState !== 'have-local-offer') return;
