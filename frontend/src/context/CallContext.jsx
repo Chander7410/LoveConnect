@@ -7,6 +7,27 @@ const logCall = (message, detail = '') => {
   console.log(`[LoveConnect Call] ${message}`, detail);
 };
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+const emitIncomingCall = (call) => {
+  logCall('incoming call event emitted', call?.callId);
+  if (call) {
+    sessionStorage.setItem('loveconnect_incoming_call', JSON.stringify({ ...call, cachedAt: Date.now() }));
+  }
+  window.dispatchEvent(new CustomEvent('loveconnect:incomingCall', { detail: call }));
+};
+
+const mergeIncomingSignal = (current, signal, pendingOffer = null) => {
+  const base = current?.callId === signal.callId ? current : null;
+  return {
+    ...(base || signal),
+    ...signal,
+    senderName: base?.senderName || signal.senderName || signal.payload?.callerName,
+    payload: {
+      ...(signal.payload || {}),
+      ...(base?.payload || {}),
+      ...(pendingOffer?.payload || {})
+    }
+  };
+};
 
 export function CallProvider({ children }) {
   const [incomingCall, setIncomingCall] = useState(null);
@@ -18,6 +39,7 @@ export function CallProvider({ children }) {
   const [error, setError] = useState('');
   const peerRef = useRef(null);
   const signalRef = useRef(null);
+  const incomingCallRef = useRef(null);
   const handledIncomingRef = useRef(new Set());
   const pendingOffersRef = useRef(new Map());
   const pendingRemoteIceRef = useRef([]);
@@ -54,6 +76,7 @@ export function CallProvider({ children }) {
     peerRef.current = null;
     pendingOffersRef.current.clear();
     pendingRemoteIceRef.current = [];
+    sessionStorage.removeItem('loveconnect_incoming_call');
   }, []);
 
   const clearCallRequestRetry = useCallback(() => {
@@ -78,13 +101,40 @@ export function CallProvider({ children }) {
       }
     };
     peer.ontrack = (event) => {
-      logCall('remote track received', event.streams[0]);
-      logCall('remote stream received', event.streams[0]);
-      setRemoteStream(event.streams[0]);
+      const stream = event.streams?.[0] || new MediaStream([event.track]);
+      const videoTracks = stream.getVideoTracks();
+      const audioTracks = stream.getAudioTracks();
+      logCall('remote track received', {
+        kind: event.track?.kind,
+        id: event.track?.id,
+        readyState: event.track?.readyState,
+        streamId: stream.id
+      });
+      logCall('remote stream tracks count', {
+        streamId: stream.id,
+        videoTracks: videoTracks.length,
+        audioTracks: audioTracks.length,
+        videoTrackStates: videoTracks.map((track) => `${track.id}:${track.readyState}:${track.enabled}`),
+        audioTrackStates: audioTracks.map((track) => `${track.id}:${track.readyState}:${track.enabled}`)
+      });
+      logCall('remote stream received', stream);
+      setRemoteStream((currentStream) => {
+        if (currentStream?.id === stream.id) return currentStream;
+        return stream;
+      });
     };
     peer.onconnectionstatechange = () => {
       logCall('connection state change', peer.connectionState);
       logCall('connectionState', peer.connectionState);
+      if (peer.connectionState === 'connected') {
+        const receivers = peer.getReceivers().map((receiver) => ({
+          kind: receiver.track?.kind,
+          id: receiver.track?.id,
+          readyState: receiver.track?.readyState,
+          enabled: receiver.track?.enabled
+        }));
+        logCall('connection connected remote receivers', receivers);
+      }
       if (['failed', 'disconnected', 'closed'].includes(peer.connectionState)) {
         setError(peer.connectionState === 'failed' ? 'Call connection failed.' : '');
       }
@@ -127,7 +177,15 @@ export function CallProvider({ children }) {
 
   const answerIncomingOffer = useCallback(async (signal) => {
     const current = activeRef.current;
-    if (!signal?.payload?.description || !current || current.id !== signal.callId) return false;
+    logCall('answerIncomingOffer entered', signal?.callId);
+    if (!signal?.payload?.description || !current || current.id !== signal.callId) {
+      logCall('answerIncomingOffer skipped', {
+        hasDescription: Boolean(signal?.payload?.description),
+        activeCallId: current?.id,
+        signalCallId: signal?.callId
+      });
+      return false;
+    }
     const peer = await ensurePeer(signal.senderId || current.peerId);
     if (peer.signalingState !== 'stable') {
       logCall('offer received while signaling not stable', peer.signalingState);
@@ -135,17 +193,33 @@ export function CallProvider({ children }) {
     }
     logCall('offer received', signal.payload.description);
     await peer.setRemoteDescription(signal.payload.description);
+    logCall('setRemoteDescription success', signal.callId);
     await applyPendingIce(peer);
     const answer = await peer.createAnswer();
+    logCall('createAnswer success', answer);
     await peer.setLocalDescription(answer);
-    logCall('answer sent', answer);
-    await sendSignal('answer', {
+    logCall('setLocalDescription success', answer);
+    const answerDestination = signal.senderUid || current.peerUid || signal.senderId || current.peerId;
+    logCall('receiver answer publish destination', {
+      callId: signal.callId,
+      receiverId: signal.senderId || current.peerId,
+      receiverUid: signal.senderUid || current.peerUid || undefined,
+      destination: answerDestination,
+      sdpType: answer.type,
+      hasSdp: Boolean(answer.sdp)
+    });
+    const sent = await sendSignal('answer', {
       callId: signal.callId,
       receiverId: signal.senderId || current.peerId,
       receiverUid: signal.senderUid || current.peerUid || undefined,
       callType: signal.callType || current.callType,
       payload: { description: answer }
     });
+    if (!sent) {
+      logCall('answer send failed', signal.callId);
+      return false;
+    }
+    logCall('answer sent', answer);
     pendingOffersRef.current.delete(signal.callId);
     return true;
   }, [ensurePeer, sendSignal]);
@@ -200,51 +274,64 @@ export function CallProvider({ children }) {
     }, 2000);
   }, [clearCallRequestRetry, ensurePeer, openMedia, sendSignal]);
 
-  const acceptCall = useCallback(async () => {
-    if (!incomingCall) return;
+  const acceptCall = useCallback(async (callOverride = null) => {
+    const callToAccept = callOverride || incomingCall;
+    logCall('acceptCall() entered', {
+      callId: callToAccept?.callId,
+      hasOverride: Boolean(callOverride),
+      hasPayloadOffer: Boolean(callToAccept?.payload?.description),
+      hasPendingOffer: Boolean(callToAccept?.callId && pendingOffersRef.current.has(callToAccept.callId))
+    });
+    if (!callToAccept) return;
     setError('');
+    sessionStorage.removeItem('loveconnect_incoming_call');
     const nextCall = {
-      id: incomingCall.callId,
-      callType: incomingCall.callType || 'AUDIO',
-      peerId: incomingCall.senderId,
-      peerUid: incomingCall.senderUid || '',
-      peer: { id: incomingCall.senderId, name: incomingCall.senderName },
+      id: callToAccept.callId,
+      callType: callToAccept.callType || 'AUDIO',
+      peerId: callToAccept.senderId,
+      peerUid: callToAccept.senderUid || '',
+      peer: { id: callToAccept.senderId, name: callToAccept.senderName },
       direction: 'incoming',
       status: 'ACTIVE'
     };
     activeRef.current = nextCall;
     setActiveCall(nextCall);
     setIncomingCall(null);
+    incomingCallRef.current = null;
     clearCallRequestRetry();
     const stream = await openMedia(nextCall.callType);
-    const peer = await ensurePeer(incomingCall.senderId);
+    const peer = await ensurePeer(callToAccept.senderId);
     attachLocalTracks(peer, stream);
-    api.post(`/calls/${incomingCall.callId}/accept`).catch(() => {});
+    api.post(`/calls/${callToAccept.callId}/accept`).catch(() => {});
     await sendSignal('call-accept', {
-      callId: incomingCall.callId,
-      receiverId: incomingCall.senderId,
-      receiverUid: incomingCall.senderUid || undefined,
+      callId: callToAccept.callId,
+      receiverId: callToAccept.senderId,
+      receiverUid: callToAccept.senderUid || undefined,
       callType: nextCall.callType
     });
-    const pendingOffer = pendingOffersRef.current.get(incomingCall.callId);
-    const offerSignal = incomingCall.payload?.description ? incomingCall : pendingOffer;
+    const pendingOffer = pendingOffersRef.current.get(callToAccept.callId);
+    const offerSignal = callToAccept.payload?.description ? callToAccept : pendingOffer;
     if (offerSignal) {
-      await answerIncomingOffer(offerSignal);
+      const answered = await answerIncomingOffer(offerSignal);
+      if (!answered) logCall('acceptCall() could not answer offer yet', callToAccept.callId);
     } else {
-      logCall('call accepted; waiting for offer', incomingCall.callId);
+      logCall('call accepted; waiting for offer', callToAccept.callId);
     }
   }, [answerIncomingOffer, clearCallRequestRetry, ensurePeer, incomingCall, openMedia, sendSignal]);
 
-  const rejectCall = useCallback(async () => {
-    if (!incomingCall) return;
-    await api.post(`/calls/${incomingCall.callId}/reject`);
+  const rejectCall = useCallback(async (callOverride = null) => {
+    const callToReject = callOverride || incomingCall;
+    if (!callToReject) return;
+    await api.post(`/calls/${callToReject.callId}/reject`);
     await sendSignal('call-reject', {
-      callId: incomingCall.callId,
-      receiverId: incomingCall.senderId,
-      receiverUid: incomingCall.senderUid || undefined,
-      callType: incomingCall.callType
+      callId: callToReject.callId,
+      receiverId: callToReject.senderId,
+      receiverUid: callToReject.senderUid || undefined,
+      callType: callToReject.callType
     });
     setIncomingCall(null);
+    incomingCallRef.current = null;
+    sessionStorage.removeItem('loveconnect_incoming_call');
   }, [incomingCall, sendSignal]);
 
   const endCall = useCallback(async (status = 'COMPLETED') => {
@@ -260,18 +347,34 @@ export function CallProvider({ children }) {
     await api.post(`/calls/${call.id}/end`, null, { params: { status } }).catch(() => {});
     activeRef.current = null;
     setActiveCall(null);
+    sessionStorage.removeItem('loveconnect_incoming_call');
     stopMedia();
   }, [clearCallRequestRetry, sendSignal, stopMedia]);
 
   const handleSignal = useCallback(async (signal) => {
+    if (signal.type === 'answer') {
+      logCall('caller answer event received', {
+        callId: signal.callId,
+        senderId: signal.senderId,
+        senderUid: signal.senderUid,
+        receiverId: signal.receiverId,
+        receiverUid: signal.receiverUid,
+        sdpType: signal.payload?.description?.type,
+        hasSdp: Boolean(signal.payload?.description?.sdp)
+      });
+    }
     if (signal.type === 'call-request') {
+      if (activeRef.current?.id === signal.callId) {
+        logCall('duplicate call request ignored for active call', signal.callId);
+        return;
+      }
       handledIncomingRef.current.add(signal.callId);
       const pendingOffer = pendingOffersRef.current.get(signal.callId);
-      const nextIncoming = pendingOffer
-        ? { ...signal, payload: { ...(signal.payload || {}), ...(pendingOffer.payload || {}) } }
-        : signal;
       logCall('incoming call request received', signal.callId);
+      const nextIncoming = mergeIncomingSignal(incomingCallRef.current, signal, pendingOffer);
+      incomingCallRef.current = nextIncoming;
       setIncomingCall(nextIncoming);
+      emitIncomingCall(nextIncoming);
       return;
     }
     if (signal.type === 'call-reject') {
@@ -330,11 +433,10 @@ export function CallProvider({ children }) {
       pendingOffersRef.current.set(signal.callId, signal);
       if (!activeRef.current) {
         logCall('incoming offer queued', signal.callId);
-        setIncomingCall((current) => ({
-          ...(current || signal),
-          ...signal,
-          payload: { ...(current?.payload || {}), ...(signal.payload || {}) }
-        }));
+        const nextIncoming = mergeIncomingSignal(incomingCallRef.current, signal, signal);
+        incomingCallRef.current = nextIncoming;
+        setIncomingCall(nextIncoming);
+        emitIncomingCall(nextIncoming);
         return;
       }
       activeRef.current = { ...activeRef.current, peerUid: signal.senderUid || activeRef.current.peerUid };
@@ -346,6 +448,7 @@ export function CallProvider({ children }) {
       logCall('answer received', signal.payload?.description);
       if (peer.signalingState !== 'have-local-offer') return;
       await peer.setRemoteDescription(signal.payload.description);
+      logCall('caller setRemoteDescription(answer) success', signal.callId);
       await applyPendingIce(peer);
       clearCallRequestRetry();
       if (activeRef.current) {
@@ -383,14 +486,17 @@ export function CallProvider({ children }) {
         const call = data?.[0];
         if (!call || handledIncomingRef.current.has(call.id)) return;
         handledIncomingRef.current.add(call.id);
-        setIncomingCall({
+        const nextIncoming = {
           type: 'call-request',
           callId: call.id,
           callType: call.callType || call.type || 'AUDIO',
           senderId: call.caller?.id || call.callerId,
           senderName: call.caller?.name || 'LoveConnect member',
           payload: {}
-        });
+        };
+        incomingCallRef.current = nextIncoming;
+        setIncomingCall(nextIncoming);
+        emitIncomingCall(nextIncoming);
       } catch {
         // WebSocket is primary; polling is a quiet mobile fallback.
       }

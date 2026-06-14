@@ -41,6 +41,12 @@ public class SignalingController {
         var receiver = resolveReceiver(message);
         log.info("WebRTC {} received call={} fromUid={} fromId={} toUid={} toId={}",
             type, message.callId(), sender.getFirebaseUid(), sender.getId(), receiver.getFirebaseUid(), receiver.getId());
+        if ("answer".equals(type)) {
+            var description = message.payload() == null ? null : message.payload().get("description");
+            log.info("WebRTC backend answer received call={} fromUid={} toUid={} hasDescription={} payloadKeys={}",
+                message.callId(), sender.getFirebaseUid(), receiver.getFirebaseUid(), description != null,
+                message.payload() == null ? List.of() : message.payload().keySet());
+        }
         if (receiver.getFirebaseUid() == null || receiver.getFirebaseUid().isBlank()) {
             throw new IllegalArgumentException("Receiver WebSocket uid not found");
         }
@@ -53,6 +59,7 @@ public class SignalingController {
         outbound.put("senderUid", sender.getFirebaseUid());
         outbound.put("senderName", sender.getDisplayName());
         outbound.put("receiverId", receiver.getId());
+        outbound.put("receiverUid", receiver.getFirebaseUid());
         outbound.put("payload", message.payload() == null ? Map.of() : message.payload());
 
         var callPrincipal = new FirebasePrincipal(principal.getName(), null, null);
@@ -68,8 +75,13 @@ public class SignalingController {
             log.info("WebRTC call ended call={} fromUid={} toUid={}", message.callId(), sender.getFirebaseUid(), receiver.getFirebaseUid());
         }
 
-        messaging.convertAndSend("/topic/signaling/" + receiver.getFirebaseUid(), outbound);
-        log.info("WebRTC {} sent call={} topic=/topic/signaling/{}", type, outbound.get("callId"), receiver.getFirebaseUid());
+        var destination = "/topic/signaling/" + receiver.getFirebaseUid();
+        if ("answer".equals(type)) {
+            log.info("WebRTC backend answer forwarded to user call={} destination={} senderUid={} receiverUid={}",
+                outbound.get("callId"), destination, sender.getFirebaseUid(), receiver.getFirebaseUid());
+        }
+        messaging.convertAndSend(destination, outbound);
+        log.info("WebRTC {} sent call={} topic={}", type, outbound.get("callId"), destination);
     }
 
     private com.loveconnect.mongoapp.model.UserProfile resolveReceiver(CallSignalMessage message) {
