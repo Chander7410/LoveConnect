@@ -12,7 +12,7 @@ const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('love
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
-    ? 'https://such-wales-emperor-parks.trycloudflare.com/api'
+    ? 'https://loveconnectbackend-cv98aab4.b4a.run/api'
     : '';
 
 export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
