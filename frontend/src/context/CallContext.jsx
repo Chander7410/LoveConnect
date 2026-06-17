@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import api from '../services/api.js';
 import { appUidFromToken, createPeer, createSignalClient, publishSignal } from '../services/webrtc.js';
+import { createRingtone } from '../utils/callRingtone.js';
 
 const CallContext = createContext(null);
 const logCall = (message, detail = '') => {
@@ -45,6 +46,8 @@ export function CallProvider({ children }) {
   const pendingRemoteIceRef = useRef([]);
   const activeRef = useRef(null);
   const callRequestRetryRef = useRef(null);
+  const ringtoneRef = useRef(null);
+  const ringingCallIdRef = useRef(null);
 
   const token = localStorage.getItem('loveconnect_token') || sessionStorage.getItem('loveconnect_token');
   const uid = appUidFromToken(token);
@@ -84,6 +87,18 @@ export function CallProvider({ children }) {
       window.clearInterval(callRequestRetryRef.current);
       callRequestRetryRef.current = null;
     }
+  }, []);
+
+  const stopRinging = useCallback(() => {
+    ringtoneRef.current?.stop();
+    ringingCallIdRef.current = null;
+  }, []);
+
+  const playRinging = useCallback((callType, callId = '') => {
+    if (callId && ringingCallIdRef.current === callId) return;
+    if (!ringtoneRef.current) ringtoneRef.current = createRingtone();
+    ringingCallIdRef.current = callId || 'active-call';
+    ringtoneRef.current.play(callType);
   }, []);
 
   const ensurePeer = useCallback(async (receiverId) => {
@@ -239,6 +254,7 @@ export function CallProvider({ children }) {
     const nextCall = { ...data, callType, peerId: receiver.id, peerUid: receiverUid, peer: receiver, direction: 'outgoing', status: 'RINGING' };
     activeRef.current = nextCall;
     setActiveCall(nextCall);
+    playRinging(callType, data.id);
     const stream = await openMedia(callType);
     const peer = await ensurePeer(receiver.id);
     attachLocalTracks(peer, stream);
@@ -284,6 +300,7 @@ export function CallProvider({ children }) {
     });
     if (!callToAccept) return;
     setError('');
+    stopRinging();
     sessionStorage.removeItem('loveconnect_incoming_call');
     const nextCall = {
       id: callToAccept.callId,
@@ -322,6 +339,7 @@ export function CallProvider({ children }) {
   const rejectCall = useCallback(async (callOverride = null) => {
     const callToReject = callOverride || incomingCall;
     if (!callToReject) return;
+    stopRinging();
     await api.post(`/calls/${callToReject.callId}/reject`);
     await sendSignal('call-reject', {
       callId: callToReject.callId,
@@ -337,6 +355,7 @@ export function CallProvider({ children }) {
   const endCall = useCallback(async (status = 'COMPLETED') => {
     const call = activeRef.current;
     if (!call) return;
+    stopRinging();
     clearCallRequestRetry();
     await sendSignal('call-end', {
       callId: call.id,
@@ -375,10 +394,12 @@ export function CallProvider({ children }) {
       incomingCallRef.current = nextIncoming;
       setIncomingCall(nextIncoming);
       emitIncomingCall(nextIncoming);
+      playRinging(nextIncoming.callType || signal.callType || 'AUDIO', signal.callId);
       return;
     }
     if (signal.type === 'call-reject') {
       setError('Call rejected.');
+      stopRinging();
       clearCallRequestRetry();
       activeRef.current = null;
       setActiveCall(null);
@@ -387,6 +408,7 @@ export function CallProvider({ children }) {
     }
     if (signal.type === 'call-end') {
       activeRef.current = null;
+      stopRinging();
       clearCallRequestRetry();
       setActiveCall(null);
       stopMedia();
@@ -397,6 +419,7 @@ export function CallProvider({ children }) {
       if (!call) return;
       const callWithUid = { ...call, peerUid: signal.senderUid || call.peerUid };
       activeRef.current = callWithUid;
+      stopRinging();
       clearCallRequestRetry();
       const peer = await ensurePeer(call.peerId);
       if (peer.localDescription) {
@@ -437,6 +460,7 @@ export function CallProvider({ children }) {
         incomingCallRef.current = nextIncoming;
         setIncomingCall(nextIncoming);
         emitIncomingCall(nextIncoming);
+        playRinging(nextIncoming.callType || signal.callType || 'AUDIO', signal.callId);
         return;
       }
       activeRef.current = { ...activeRef.current, peerUid: signal.senderUid || activeRef.current.peerUid };
@@ -452,6 +476,7 @@ export function CallProvider({ children }) {
       await applyPendingIce(peer);
       clearCallRequestRetry();
       if (activeRef.current) {
+        stopRinging();
         const active = { ...activeRef.current, peerUid: signal.senderUid || activeRef.current.peerUid, status: 'ACTIVE' };
         activeRef.current = active;
         setActiveCall(active);
@@ -465,7 +490,7 @@ export function CallProvider({ children }) {
         pendingRemoteIceRef.current.push(signal.payload.candidate);
       }
     }
-  }, [clearCallRequestRetry, ensurePeer, sendSignal, stopMedia]);
+  }, [clearCallRequestRetry, ensurePeer, playRinging, sendSignal, stopMedia, stopRinging]);
 
   useEffect(() => {
     if (!token || !uid) return undefined;
@@ -497,6 +522,7 @@ export function CallProvider({ children }) {
         incomingCallRef.current = nextIncoming;
         setIncomingCall(nextIncoming);
         emitIncomingCall(nextIncoming);
+        playRinging(nextIncoming.callType || 'AUDIO', call.id);
       } catch {
         // WebSocket is primary; polling is a quiet mobile fallback.
       }
@@ -504,7 +530,12 @@ export function CallProvider({ children }) {
     const interval = window.setInterval(pollIncoming, 2500);
     pollIncoming();
     return () => window.clearInterval(interval);
-  }, [incomingCall, token, uid]);
+  }, [incomingCall, playRinging, token, uid]);
+
+  useEffect(() => {
+    ringtoneRef.current = createRingtone();
+    return () => ringtoneRef.current?.stop();
+  }, []);
 
   const toggleMute = () => {
     localStream?.getAudioTracks().forEach((track) => {

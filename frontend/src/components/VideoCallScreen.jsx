@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Clock, Maximize2, Mic, MicOff, Minimize2, PhoneOff, Video, VideoOff } from 'lucide-react';
 import { useCall } from '../context/CallContext.jsx';
 
@@ -14,19 +14,27 @@ const formatElapsed = (seconds) => {
 };
 
 const useCallTimer = (activeCall) => {
-  const startedAt = useMemo(() => {
-    const parsed = Date.parse(activeCall?.startTime || '');
-    return Number.isNaN(parsed) ? Date.now() : parsed;
-  }, [activeCall?.id, activeCall?.startTime]);
+  const [startedAt, setStartedAt] = useState(null);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    if (!activeCall) return undefined;
+    if (!activeCall || activeCall.status !== 'ACTIVE') {
+      setStartedAt(null);
+      setElapsed(0);
+      return undefined;
+    }
+    const connectedAt = Date.now();
+    setStartedAt(connectedAt);
+    return undefined;
+  }, [activeCall?.id, activeCall?.status]);
+
+  useEffect(() => {
+    if (!startedAt) return undefined;
     const tick = () => setElapsed(Math.floor((Date.now() - startedAt) / 1000));
     tick();
     const interval = window.setInterval(tick, 1000);
     return () => window.clearInterval(interval);
-  }, [activeCall, startedAt]);
+  }, [startedAt]);
 
   return formatElapsed(elapsed);
 };
@@ -112,7 +120,7 @@ export default function VideoCallScreen() {
       <video ref={localRef} autoPlay muted playsInline className="local-video" />
       <div className="webrtc-call-bar">
         <strong>{activeCall.peer?.name || 'Video call'}</strong>
-        <span className="call-timer"><Clock size={15} /> {elapsed}</span>
+        <span className="call-timer"><Clock size={15} /> {activeCall.status === 'ACTIVE' ? elapsed : 'Ringing'}</span>
         <button className="btn btn-light" type="button" onClick={() => setZoomed((value) => !value)}>
           {zoomed ? <Minimize2 /> : <Maximize2 />} {zoomed ? 'Normal' : 'Zoom'}
         </button>

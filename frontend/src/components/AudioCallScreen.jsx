@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Clock, Mic, MicOff, PhoneOff, Volume2 } from 'lucide-react';
 import { useCall } from '../context/CallContext.jsx';
 
@@ -10,19 +10,27 @@ const formatElapsed = (seconds) => {
 };
 
 const useCallTimer = (activeCall) => {
-  const startedAt = useMemo(() => {
-    const parsed = Date.parse(activeCall?.startTime || '');
-    return Number.isNaN(parsed) ? Date.now() : parsed;
-  }, [activeCall?.id, activeCall?.startTime]);
+  const [startedAt, setStartedAt] = useState(null);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    if (!activeCall) return undefined;
+    if (!activeCall || activeCall.status !== 'ACTIVE') {
+      setStartedAt(null);
+      setElapsed(0);
+      return undefined;
+    }
+    const connectedAt = Date.now();
+    setStartedAt(connectedAt);
+    return undefined;
+  }, [activeCall?.id, activeCall?.status]);
+
+  useEffect(() => {
+    if (!startedAt) return undefined;
     const tick = () => setElapsed(Math.floor((Date.now() - startedAt) / 1000));
     tick();
     const interval = window.setInterval(tick, 1000);
     return () => window.clearInterval(interval);
-  }, [activeCall, startedAt]);
+  }, [startedAt]);
 
   return formatElapsed(elapsed);
 };
@@ -54,7 +62,7 @@ export default function AudioCallScreen() {
       <span>Audio call</span>
       <strong>{activeCall.peer?.name || 'LoveConnect member'}</strong>
       <div className="call-meta">
-        <span><Clock size={15} /> {elapsed}</span>
+        <span><Clock size={15} /> {activeCall.status === 'ACTIVE' ? elapsed : 'Ringing'}</span>
         <span><Volume2 size={15} /> {remoteStream?.getAudioTracks().length ? 'Audio connected' : 'Connecting audio'}</span>
       </div>
       <div className="webrtc-call-bar inline">
