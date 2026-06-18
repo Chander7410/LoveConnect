@@ -7,6 +7,17 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/loveconnect_mongo}
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:25}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:false}
+          starttls:
+            enable: ${SMTP_STARTTLS_ENABLE:true}
 
 app:
   cors:
@@ -16,6 +27,11 @@ app:
     allow-dev-tokens: ${ALLOW_DEV_TOKENS:false}
   jwt:
     secret: ${APP_JWT_SECRET:change-this-to-a-long-random-production-secret}
+  smtp:
+    from-email: ${SMTP_FROM_EMAIL:}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

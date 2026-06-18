@@ -38,6 +38,8 @@ public class UserProfile {
     private String profession;
     private List<String> interests = new ArrayList<>();
     private String role = "USER";
+    private String provider = "LOCAL";
+    private Boolean emailVerified = true;
     private boolean online;
     private boolean blocked;
     private boolean verified;
@@ -84,6 +86,10 @@ public class UserProfile {
     public void setInterests(List<String> interests) { this.interests = interests; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public String getProvider() { return provider == null ? "LOCAL" : provider; }
+    public void setProvider(String provider) { this.provider = provider; }
+    public boolean isEmailVerified() { return emailVerified == null || emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
     public boolean isOnline() { return online; }
     public void setOnline(boolean online) { this.online = online; }
     public boolean isBlocked() { return blocked; }

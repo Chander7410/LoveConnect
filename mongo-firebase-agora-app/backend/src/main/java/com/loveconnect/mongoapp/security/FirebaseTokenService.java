@@ -64,7 +64,8 @@ public class FirebaseTokenService {
     }
 
     public List<String> publicPaths() {
-        return List.of("/api/health", "/api/auth/register", "/api/auth/login",
-            "/api/auth/forgot-password", "/api/auth/reset-password", "/swagger-ui", "/v3/api-docs", "/ws");
+        return List.of("/api/health", "/api/auth/register", "/api/auth/login", "/api/auth/google",
+            "/api/auth/send-otp", "/api/auth/verify-otp", "/api/auth/forgot-password",
+            "/api/auth/reset-password", "/swagger-ui", "/v3/api-docs", "/ws");
     }
 }

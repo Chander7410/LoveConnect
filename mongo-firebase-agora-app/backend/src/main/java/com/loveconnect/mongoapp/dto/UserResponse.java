@@ -15,6 +15,8 @@ public record UserResponse(
     boolean online,
     boolean blocked,
     boolean verified,
+    String provider,
+    boolean emailVerified,
     int fakeProfileScore
 ) {
     public static UserResponse from(UserProfile profile) {
@@ -31,6 +33,8 @@ public record UserResponse(
             profile.isOnline(),
             profile.isBlocked(),
             profile.isVerified(),
+            profile.getProvider(),
+            profile.isEmailVerified(),
             profile.getFakeProfileScore()
         );
     }

@@ -12,7 +12,7 @@ const runtimeApiUrl = typeof window !== 'undefined' && !isVercelFrontend ? local
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
-    ? 'https://undertake-fonts-fence-sealed.trycloudflare.com/api'
+    ? 'https://against-initiatives-trial-steve.trycloudflare.com/api'
     : '';
 
 export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);

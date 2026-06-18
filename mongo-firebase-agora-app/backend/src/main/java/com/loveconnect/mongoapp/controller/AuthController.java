@@ -2,7 +2,10 @@ package com.loveconnect.mongoapp.controller;
 
 import com.loveconnect.mongoapp.dto.AuthResponse;
 import com.loveconnect.mongoapp.dto.ApiMessage;
+import com.loveconnect.mongoapp.dto.GoogleLoginRequest;
 import com.loveconnect.mongoapp.dto.LoginRequest;
+import com.loveconnect.mongoapp.dto.OtpSendRequest;
+import com.loveconnect.mongoapp.dto.OtpVerifyRequest;
 import com.loveconnect.mongoapp.dto.RegisterRequest;
 import com.loveconnect.mongoapp.model.UserProfile;
 import com.loveconnect.mongoapp.repository.UserProfileRepository;
@@ -49,6 +52,23 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return appAuth.login(request);
+    }
+
+    @PostMapping("/google")
+    public AuthResponse google(@Valid @RequestBody GoogleLoginRequest request) {
+        return appAuth.googleLogin(request);
+    }
+
+    @PostMapping("/send-otp")
+    public ApiMessage sendOtp(@Valid @RequestBody OtpSendRequest request) {
+        appAuth.sendOtp(request);
+        return new ApiMessage("OTP sent to your Gmail");
+    }
+
+    @PostMapping("/verify-otp")
+    public ApiMessage verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        appAuth.verifyOtp(request);
+        return new ApiMessage("OTP verified successfully");
     }
 
     @GetMapping("/me")
