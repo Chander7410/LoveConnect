@@ -14,7 +14,10 @@ export default function LoginPage() {
   const [otpSending, setOtpSending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    || (window.location.hostname === 'love-connect-beta.vercel.app'
+      ? '302420987503-59d0ip0l91asnb5crajh1tojos1j8pid.apps.googleusercontent.com'
+      : '');
 
   useEffect(() => {
     if (!googleClientId || !googleButtonRef.current) return undefined;
