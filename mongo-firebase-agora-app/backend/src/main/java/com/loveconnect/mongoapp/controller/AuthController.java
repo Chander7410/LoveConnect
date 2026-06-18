@@ -66,9 +66,8 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ApiMessage verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
-        appAuth.verifyOtp(request);
-        return new ApiMessage("OTP verified successfully");
+    public AuthResponse verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        return appAuth.verifyOtp(request);
     }
 
     @GetMapping("/me")

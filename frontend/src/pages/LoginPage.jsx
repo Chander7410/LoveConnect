@@ -88,7 +88,16 @@ export default function LoginPage() {
       saveSession(data, form.rememberMe);
       navigate('/search');
     } catch (err) {
-      setError(err.response?.data?.message || 'Google login failed');
+      const message = err.response?.data?.message || 'Google login failed';
+      if (message === 'EMAIL_NOT_VERIFIED') {
+        const googleEmail = emailFromGoogleCredential(response.credential);
+        setOtpOpen(true);
+        setOtpForm({ email: googleEmail || form.email, otp: '' });
+        setForm((current) => ({ ...current, email: googleEmail || current.email }));
+        setError('Please verify your email with OTP before login.');
+        return;
+      }
+      setError(message);
     }
   };
 
@@ -116,11 +125,25 @@ export default function LoginPage() {
     setSuccess('');
     try {
       const { data } = await api.post('/auth/verify-otp', otpForm);
+      if (data.token) {
+        saveSession(data, form.rememberMe);
+        navigate('/search');
+        return;
+      }
       setSuccess(data.message || 'OTP verified successfully');
       setOtpOpen(false);
       setForm((current) => ({ ...current, email: otpForm.email }));
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid or expired OTP');
+    }
+  };
+
+  const emailFromGoogleCredential = (credential) => {
+    try {
+      const payload = JSON.parse(atob(credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload.email || '';
+    } catch {
+      return '';
     }
   };
 

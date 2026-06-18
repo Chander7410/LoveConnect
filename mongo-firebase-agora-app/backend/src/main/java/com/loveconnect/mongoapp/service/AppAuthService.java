@@ -92,7 +92,6 @@ public class AppAuthService {
         var user = users.findAllByEmail(googleProfile.email()).stream()
             .findFirst()
             .map(existing -> {
-                existing.setEmailVerified(true);
                 if (existing.getProvider() == null || existing.getProvider().isBlank()) {
                     existing.setProvider("GOOGLE");
                 }
@@ -102,10 +101,10 @@ public class AppAuthService {
                 return existing;
             })
             .orElseGet(() -> createGoogleUser(googleProfile));
-        user.setOnline(true);
-        user.setLastSeenAt(Instant.now());
-        var saved = users.save(user);
-        return new AuthResponse(tokens.create(saved.getFirebaseUid()), UserResponse.from(saved));
+        user.setProvider("GOOGLE");
+        user.setEmailVerified(false);
+        users.save(user);
+        throw new IllegalArgumentException("EMAIL_NOT_VERIFIED");
     }
 
     public void sendOtp(OtpSendRequest request) {
@@ -122,7 +121,7 @@ public class AppAuthService {
         emails.sendOtp(email, otp);
     }
 
-    public void verifyOtp(OtpVerifyRequest request) {
+    public AuthResponse verifyOtp(OtpVerifyRequest request) {
         var email = normalizeEmail(request.email());
         var emailOtp = otps.findTopByEmailOrderByCreatedAtDesc(email)
             .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
@@ -136,10 +135,14 @@ public class AppAuthService {
         }
         emailOtp.setVerified(true);
         otps.save(emailOtp);
-        users.findAllByEmail(email).forEach(user -> {
-            user.setEmailVerified(true);
-            users.save(user);
-        });
+        var user = newestFirst(users.findAllByEmail(email)).stream()
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("User not found for verified email"));
+        user.setEmailVerified(true);
+        user.setOnline(true);
+        user.setLastSeenAt(Instant.now());
+        var saved = users.save(user);
+        return new AuthResponse(tokens.create(saved.getFirebaseUid()), UserResponse.from(saved));
     }
 
     private List<UserProfile> newestFirst(List<UserProfile> profiles) {
@@ -163,7 +166,7 @@ public class AppAuthService {
         user.setLocation("USA");
         user.setRole("USER");
         user.setProvider("GOOGLE");
-        user.setEmailVerified(true);
+        user.setEmailVerified(false);
         user.setVerified(true);
         user.setPhotoUrl(googleProfile.picture());
         return user;
