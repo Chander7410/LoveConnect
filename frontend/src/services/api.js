@@ -39,7 +39,7 @@ api.interceptors.request.use((config) => {
   if (!API_BASE_URL) {
     throw new Error(apiUnavailableMessage);
   }
-  const publicAuthPaths = ['/auth/register', '/auth/login', '/auth/forgot-password', '/auth/reset-password'];
+  const publicAuthPaths = ['/auth/register', '/auth/login', '/auth/google', '/auth/send-otp', '/auth/verify-otp', '/auth/forgot-password', '/auth/reset-password'];
   if (publicAuthPaths.includes(config.url)) return config;
   const token = localStorage.getItem('loveconnect_token') || sessionStorage.getItem('loveconnect_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;

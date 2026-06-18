@@ -2076,6 +2076,35 @@ textarea.form-control:focus {
   text-decoration: underline;
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  color: var(--lc-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: rgba(20, 23, 39, 0.12);
+}
+
+.google-login-button {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+}
+
+.google-login-button > div {
+  width: 100% !important;
+}
+
 .forgot-password-panel {
   margin-top: 1.15rem;
   padding: 1rem;

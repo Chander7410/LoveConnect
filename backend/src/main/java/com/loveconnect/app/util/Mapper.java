@@ -25,7 +25,8 @@ public final class Mapper {
     public static UserResponse user(User user) {
         return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getMobileNumber(),
                 user.getGender(), user.getAge(), user.getLocation(), user.getProfilePictureUrl(),
-                user.getRole(), user.isOnline(), user.isBlocked(), user.isVerified(), user.getFakeProfileScore());
+                user.getRole(), user.isOnline(), user.isBlocked(), user.isVerified(), user.getProvider(),
+                user.isEmailVerified(), user.getFakeProfileScore());
     }
 
     public static ProfileResponse profile(Profile profile) {

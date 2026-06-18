@@ -46,6 +46,9 @@ public class User extends BaseEntity {
     private boolean online = false;
     @Column(nullable = false)
     private boolean verified = false;
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider = AuthProvider.LOCAL;
+    private Boolean emailVerified = true;
     @Column(nullable = false)
     private boolean emailNotificationsEnabled = true;
     @Column(nullable = false)
@@ -87,6 +90,10 @@ public class User extends BaseEntity {
     public void setOnline(boolean online) { this.online = online; }
     public boolean isVerified() { return verified; }
     public void setVerified(boolean verified) { this.verified = verified; }
+    public AuthProvider getProvider() { return provider == null ? AuthProvider.LOCAL : provider; }
+    public void setProvider(AuthProvider provider) { this.provider = provider; }
+    public boolean isEmailVerified() { return emailVerified == null || emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
     public boolean isEmailNotificationsEnabled() { return emailNotificationsEnabled; }
     public void setEmailNotificationsEnabled(boolean emailNotificationsEnabled) { this.emailNotificationsEnabled = emailNotificationsEnabled; }
     public boolean isPushNotificationsEnabled() { return pushNotificationsEnabled; }

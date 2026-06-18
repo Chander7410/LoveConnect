@@ -4,7 +4,10 @@ import com.loveconnect.app.dto.ApiMessage;
 import com.loveconnect.app.dto.AuthResponse;
 import com.loveconnect.app.dto.ForgotPasswordResponse;
 import com.loveconnect.app.dto.ForgotPasswordRequest;
+import com.loveconnect.app.dto.GoogleLoginRequest;
 import com.loveconnect.app.dto.LoginRequest;
+import com.loveconnect.app.dto.OtpSendRequest;
+import com.loveconnect.app.dto.OtpVerifyRequest;
 import com.loveconnect.app.dto.RegisterRequest;
 import com.loveconnect.app.dto.ResetPasswordRequest;
 import com.loveconnect.app.service.CurrentUserService;
@@ -35,6 +38,23 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/google")
+    public AuthResponse google(@Valid @RequestBody GoogleLoginRequest request) {
+        return authService.googleLogin(request);
+    }
+
+    @PostMapping("/send-otp")
+    public ApiMessage sendOtp(@Valid @RequestBody OtpSendRequest request) {
+        authService.sendOtp(request);
+        return new ApiMessage("OTP sent to your Gmail");
+    }
+
+    @PostMapping("/verify-otp")
+    public ApiMessage verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        authService.verifyOtp(request);
+        return new ApiMessage("OTP verified successfully");
     }
 
     @PostMapping("/presence")
