@@ -6,15 +6,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document("email_otps")
-public class EmailOtp {
+@Document("mobile_otps")
+public class MobileOtp {
     @Id
     private String id;
     @Indexed
-    private String email;
-    @Indexed
-    private EmailOtpPurpose purpose = EmailOtpPurpose.EMAIL_VERIFY;
+    private String mobileNumber;
     private String otpHash;
+    private OtpPurpose purpose;
     private Instant expiryTime;
     private boolean verified;
     private int attempts;
@@ -23,12 +22,12 @@ public class EmailOtp {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public EmailOtpPurpose getPurpose() { return purpose == null ? EmailOtpPurpose.EMAIL_VERIFY : purpose; }
-    public void setPurpose(EmailOtpPurpose purpose) { this.purpose = purpose; }
+    public String getMobileNumber() { return mobileNumber; }
+    public void setMobileNumber(String mobileNumber) { this.mobileNumber = mobileNumber; }
     public String getOtpHash() { return otpHash; }
     public void setOtpHash(String otpHash) { this.otpHash = otpHash; }
+    public OtpPurpose getPurpose() { return purpose; }
+    public void setPurpose(OtpPurpose purpose) { this.purpose = purpose; }
     public Instant getExpiryTime() { return expiryTime; }
     public void setExpiryTime(Instant expiryTime) { this.expiryTime = expiryTime; }
     public boolean isVerified() { return verified; }

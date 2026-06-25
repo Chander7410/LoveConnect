@@ -14,3 +14,8 @@ backend/data/
 .env
 *.log
 *.err
+
+# Local-only test tooling
+.tools/
+docker-compose.mongo-full-test.yml
+docker-compose.*.local.yml

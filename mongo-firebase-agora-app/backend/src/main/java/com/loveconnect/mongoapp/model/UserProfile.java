@@ -1,6 +1,7 @@
 package com.loveconnect.mongoapp.model;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -9,6 +10,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document("user_profiles")
 public class UserProfile {
@@ -19,6 +21,7 @@ public class UserProfile {
     @Indexed(unique = true)
     private String phoneNumber;
     @Indexed(unique = true, sparse = true)
+    @Field(write = Field.Write.NON_NULL)
     private String email;
     @JsonIgnore
     private String passwordHash;
@@ -33,6 +36,7 @@ public class UserProfile {
     private String bio;
     private String gender;
     private Integer age;
+    private LocalDate dateOfBirth;
     private String location;
     private String education;
     private String profession;
@@ -40,6 +44,8 @@ public class UserProfile {
     private String role = "USER";
     private String provider = "LOCAL";
     private Boolean emailVerified = true;
+    private Boolean mobileVerified = false;
+    private Boolean profileCompleted = false;
     private boolean online;
     private boolean blocked;
     private boolean verified;
@@ -76,6 +82,8 @@ public class UserProfile {
     public void setGender(String gender) { this.gender = gender; }
     public Integer getAge() { return age; }
     public void setAge(Integer age) { this.age = age; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
     public String getEducation() { return education; }
@@ -90,6 +98,10 @@ public class UserProfile {
     public void setProvider(String provider) { this.provider = provider; }
     public boolean isEmailVerified() { return emailVerified == null || emailVerified; }
     public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+    public boolean isMobileVerified() { return mobileVerified != null && mobileVerified; }
+    public void setMobileVerified(boolean mobileVerified) { this.mobileVerified = mobileVerified; }
+    public boolean isProfileCompleted() { return profileCompleted != null && profileCompleted; }
+    public void setProfileCompleted(boolean profileCompleted) { this.profileCompleted = profileCompleted; }
     public boolean isOnline() { return online; }
     public void setOnline(boolean online) { this.online = online; }
     public boolean isBlocked() { return blocked; }

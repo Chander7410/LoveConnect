@@ -2,11 +2,20 @@ package com.loveconnect.mongoapp.controller;
 
 import com.loveconnect.mongoapp.dto.AuthResponse;
 import com.loveconnect.mongoapp.dto.ApiMessage;
+import com.loveconnect.mongoapp.dto.CompleteSignupRequest;
+import com.loveconnect.mongoapp.dto.ForgotPasswordOtpRequest;
+import com.loveconnect.mongoapp.dto.ForgotPasswordOtpVerifyRequest;
+import com.loveconnect.mongoapp.dto.ForgotPasswordResetOtpRequest;
 import com.loveconnect.mongoapp.dto.GoogleLoginRequest;
+import com.loveconnect.mongoapp.dto.LoginOtpVerifyRequest;
 import com.loveconnect.mongoapp.dto.LoginRequest;
+import com.loveconnect.mongoapp.dto.MobileOtpSendRequest;
+import com.loveconnect.mongoapp.dto.MobileOtpVerifyRequest;
 import com.loveconnect.mongoapp.dto.OtpSendRequest;
 import com.loveconnect.mongoapp.dto.OtpVerifyRequest;
-import com.loveconnect.mongoapp.dto.RegisterRequest;
+import com.loveconnect.mongoapp.dto.ResendOtpRequest;
+import com.loveconnect.mongoapp.dto.SignupEmailOtpRequest;
+import com.loveconnect.mongoapp.dto.SignupEmailOtpVerifyRequest;
 import com.loveconnect.mongoapp.model.UserProfile;
 import com.loveconnect.mongoapp.repository.UserProfileRepository;
 import com.loveconnect.mongoapp.service.AppAuthService;
@@ -45,13 +54,19 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
-        return appAuth.register(request);
+    public ApiMessage register(@RequestBody SignupEmailOtpRequest request) {
+        appAuth.sendSignupEmailOtp(request);
+        return new ApiMessage("OTP sent to your Email ID");
     }
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return appAuth.login(request);
+    }
+
+    @PostMapping("/verify-login-otp")
+    public AuthResponse verifyLoginOtp(@Valid @RequestBody LoginOtpVerifyRequest request) {
+        return appAuth.verifyLoginOtp(request);
     }
 
     @PostMapping("/google")
@@ -68,6 +83,71 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public AuthResponse verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
         return appAuth.verifyOtp(request);
+    }
+
+    @PostMapping("/send-signup-otp")
+    public ApiMessage sendSignupOtp(@Valid @RequestBody MobileOtpSendRequest request) {
+        appAuth.sendSignupOtp(request);
+        return new ApiMessage("OTP sent to your mobile number");
+    }
+
+    @PostMapping("/signup/send-otp")
+    public ApiMessage signupSendOtp(@RequestBody SignupEmailOtpRequest request) {
+        appAuth.sendSignupEmailOtp(request);
+        return new ApiMessage("OTP sent to your Email ID");
+    }
+
+    @PostMapping("/signup/verify-otp")
+    public ApiMessage signupVerifyOtp(@Valid @RequestBody SignupEmailOtpVerifyRequest request) {
+        appAuth.verifySignupEmailOtp(request);
+        return new ApiMessage("Signup completed successfully. Please login.");
+    }
+
+    @PostMapping("/verify-signup-otp")
+    public ApiMessage verifySignupOtp(@RequestBody Map<String, String> request) {
+        var email = request.getOrDefault("email", "");
+        var otp = request.getOrDefault("otp", "");
+        if (!email.isBlank()) {
+            appAuth.verifySignupEmailOtp(new SignupEmailOtpVerifyRequest(email, otp));
+            return new ApiMessage("Signup completed successfully. Please login.");
+        }
+        appAuth.verifySignupOtp(new MobileOtpVerifyRequest(request.getOrDefault("mobileNumber", ""), otp));
+        return new ApiMessage("OTP verified successfully");
+    }
+
+    @PostMapping("/resend-signup-otp")
+    public ApiMessage resendSignupOtp(@RequestBody Map<String, String> request) {
+        appAuth.resendSignupEmailOtp(request.getOrDefault("email", ""));
+        return new ApiMessage("OTP sent again");
+    }
+
+    @PostMapping("/complete-signup")
+    public AuthResponse completeSignup(@Valid @RequestBody CompleteSignupRequest request) {
+        return appAuth.completeSignup(request);
+    }
+
+    @PostMapping("/forgot-password/send-otp")
+    public ApiMessage forgotPasswordSendOtp(@Valid @RequestBody ForgotPasswordOtpRequest request) {
+        appAuth.sendForgotPasswordOtp(request);
+        return new ApiMessage("OTP sent to registered Email ID");
+    }
+
+    @PostMapping("/forgot-password/verify-otp")
+    public ApiMessage forgotPasswordVerifyOtp(@Valid @RequestBody ForgotPasswordOtpVerifyRequest request) {
+        appAuth.verifyForgotPasswordOtp(request);
+        return new ApiMessage("OTP verified successfully");
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public ApiMessage forgotPasswordReset(@Valid @RequestBody ForgotPasswordResetOtpRequest request) {
+        appAuth.resetForgotPassword(request);
+        return new ApiMessage("Password updated. You can login with the new password.");
+    }
+
+    @PostMapping("/resend-otp")
+    public ApiMessage resendOtp(@Valid @RequestBody ResendOtpRequest request) {
+        appAuth.resendMobileOtp(request);
+        return new ApiMessage("OTP sent again");
     }
 
     @GetMapping("/me")
@@ -129,4 +209,5 @@ public class AuthController {
         users.save(user);
         return new ApiMessage("Password updated. You can login with the new password.");
     }
+
 }

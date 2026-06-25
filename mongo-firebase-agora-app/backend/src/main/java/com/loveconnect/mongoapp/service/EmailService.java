@@ -11,21 +11,39 @@ import org.springframework.util.StringUtils;
 public class EmailService {
     private final JavaMailSender mailSender;
     private final String fromEmail;
+    private final String smtpUsername;
+    private final String smtpPassword;
 
-    public EmailService(JavaMailSender mailSender, @Value("${app.smtp.from-email:}") String fromEmail) {
+    public EmailService(JavaMailSender mailSender,
+                        @Value("${app.smtp.from-email:}") String fromEmail,
+                        @Value("${spring.mail.username:}") String smtpUsername,
+                        @Value("${spring.mail.password:}") String smtpPassword) {
         this.mailSender = mailSender;
         this.fromEmail = fromEmail;
+        this.smtpUsername = smtpUsername;
+        this.smtpPassword = smtpPassword;
     }
 
     public void sendOtp(String to, String otp) {
-        if (!StringUtils.hasText(fromEmail)) {
+        if (!StringUtils.hasText(fromEmail) || !StringUtils.hasText(smtpUsername) || !StringUtils.hasText(smtpPassword)) {
             throw new IllegalArgumentException("SMTP is not configured");
         }
         var message = new SimpleMailMessage();
         message.setFrom(fromEmail);
         message.setTo(to);
-        message.setSubject("LoveConnect email verification OTP");
-        message.setText("Your LoveConnect OTP is " + otp + ". It expires in 5 minutes.");
+        message.setSubject("LoveConnect Verification Code");
+        message.setText("""
+            Hello,
+
+            Your LoveConnect OTP is: %s
+
+            This OTP is valid for 5 minutes.
+
+            Do not share this code with anyone.
+
+            Thanks,
+            LoveConnect Team
+            """.formatted(otp));
         try {
             mailSender.send(message);
         } catch (MailException ex) {

@@ -17,6 +17,8 @@ public record UserResponse(
     boolean verified,
     String provider,
     boolean emailVerified,
+    boolean mobileVerified,
+    boolean profileCompleted,
     int fakeProfileScore
 ) {
     public static UserResponse from(UserProfile profile) {
@@ -35,6 +37,8 @@ public record UserResponse(
             profile.isVerified(),
             profile.getProvider(),
             profile.isEmailVerified(),
+            profile.isMobileVerified(),
+            profile.isProfileCompleted(),
             profile.getFakeProfileScore()
         );
     }

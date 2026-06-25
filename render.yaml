@@ -17,3 +17,15 @@ services:
         value: false
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
+      - key: BREVO_SMTP_HOST
+        value: smtp-relay.brevo.com
+      - key: BREVO_SMTP_PORT
+        value: 587
+      - key: BREVO_SMTP_USERNAME
+        sync: false
+      - key: BREVO_SMTP_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        value: supportloveconnect@gmail.com
+      - key: APP_DEV_OTP_RESPONSE
+        value: false

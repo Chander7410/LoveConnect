@@ -66,6 +66,12 @@ public class FirebaseTokenService {
     public List<String> publicPaths() {
         return List.of("/api/health", "/api/auth/register", "/api/auth/login", "/api/auth/google",
             "/api/auth/send-otp", "/api/auth/verify-otp", "/api/auth/forgot-password",
-            "/api/auth/reset-password", "/swagger-ui", "/v3/api-docs", "/ws");
+            "/api/auth/reset-password", "/api/auth/send-signup-otp", "/api/auth/verify-signup-otp",
+            "/api/auth/complete-signup", "/api/auth/resend-signup-otp",
+            "/api/auth/signup/send-otp", "/api/auth/signup/verify-otp",
+            "/api/auth/verify-login-otp",
+            "/api/auth/forgot-password/send-otp", "/api/auth/forgot-password/verify-otp",
+            "/api/auth/forgot-password/reset", "/api/auth/resend-otp",
+            "/swagger-ui", "/v3/api-docs", "/ws");
     }
 }

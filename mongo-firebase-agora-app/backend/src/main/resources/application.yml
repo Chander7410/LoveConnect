@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:${PORT:8080}}
 
 spring:
   application:
@@ -8,14 +8,14 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/loveconnect_mongo}
   mail:
-    host: ${SMTP_HOST:localhost}
-    port: ${SMTP_PORT:25}
-    username: ${SMTP_USERNAME:}
-    password: ${SMTP_PASSWORD:}
+    host: ${BREVO_SMTP_HOST:smtp-relay.brevo.com}
+    port: ${BREVO_SMTP_PORT:587}
+    username: ${BREVO_SMTP_USERNAME:}
+    password: ${BREVO_SMTP_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: ${SMTP_AUTH:false}
+          auth: ${SMTP_AUTH:true}
           starttls:
             enable: ${SMTP_STARTTLS_ENABLE:true}
 
@@ -26,9 +26,18 @@ app:
     service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
     allow-dev-tokens: ${ALLOW_DEV_TOKENS:false}
   jwt:
-    secret: ${APP_JWT_SECRET:change-this-to-a-long-random-production-secret}
+    secret: ${JWT_SECRET:${APP_JWT_SECRET:change-this-to-a-long-random-production-secret}}
+    expiry: ${JWT_EXPIRY:86400}
   smtp:
-    from-email: ${SMTP_FROM_EMAIL:}
+    from-email: ${MAIL_FROM:supportloveconnect@gmail.com}
+  sms:
+    provider: ${SMS_PROVIDER:CONSOLE}
+    api-key: ${SMS_API_KEY:}
+    sender-id: ${SMS_SENDER_ID:}
+    template-id: ${SMS_TEMPLATE_ID:}
+    fast2sms-route: ${FAST2SMS_ROUTE:OTP}
+  otp:
+    expose-dev-response: ${APP_DEV_OTP_RESPONSE:false}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
     client-secret: ${GOOGLE_CLIENT_SECRET:}
