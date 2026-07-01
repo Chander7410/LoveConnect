@@ -53,7 +53,7 @@ export function CallProvider({ children }) {
   const uid = appUidFromToken(token);
 
   const waitForSignalConnection = useCallback(async () => {
-    const deadline = Date.now() + 6000;
+    const deadline = Date.now() + 15000;
     while (!signalRef.current?.connected && Date.now() < deadline) {
       await wait(150);
     }
@@ -249,6 +249,12 @@ export function CallProvider({ children }) {
       setError('This browser does not support WebRTC media calls.');
       return;
     }
+    const signalReady = await waitForSignalConnection();
+    if (!signalReady) {
+      setError('Call server is not connected. Backend/WebSocket is offline or starting. Please wait and try again.');
+      logCall('call start blocked; WebSocket not connected', receiver.id);
+      return;
+    }
     const receiverUid = receiver.firebaseUid || receiver.uid || receiver.userId || '';
     const { data } = await api.post('/calls/start', { receiverId: receiver.id, type: callType });
     const nextCall = { ...data, callType, peerId: receiver.id, peerUid: receiverUid, peer: receiver, direction: 'outgoing', status: 'RINGING' };
@@ -275,8 +281,22 @@ export function CallProvider({ children }) {
       callType,
       payload: { description: offer }
     };
-    await sendSignal('call-request', requestSignal);
-    await sendSignal('offer', offerSignal);
+    const requestSent = await sendSignal('call-request', requestSignal);
+    const offerSent = requestSent ? await sendSignal('offer', offerSignal) : false;
+    if (!requestSent || !offerSent) {
+      logCall('call start cancelled; initial signaling failed', {
+        callId: data.id,
+        requestSent,
+        offerSent
+      });
+      stopRinging();
+      await api.post(`/calls/${data.id}/end`, null, { params: { status: 'FAILED' } }).catch(() => {});
+      activeRef.current = null;
+      setActiveCall(null);
+      stopMedia();
+      setError('Call server is not connected. Please refresh after backend is running and try again.');
+      return;
+    }
     clearCallRequestRetry();
     callRequestRetryRef.current = window.setInterval(() => {
       const current = activeRef.current;
@@ -288,7 +308,7 @@ export function CallProvider({ children }) {
       sendSignal('call-request', requestSignal);
       sendSignal('offer', offerSignal);
     }, 2000);
-  }, [clearCallRequestRetry, ensurePeer, openMedia, sendSignal]);
+  }, [clearCallRequestRetry, ensurePeer, openMedia, sendSignal, stopMedia, stopRinging, waitForSignalConnection]);
 
   const acceptCall = useCallback(async (callOverride = null) => {
     const callToAccept = callOverride || incomingCall;

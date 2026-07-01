@@ -60,13 +60,22 @@ export const createSignalClient = ({ token, uid, onSignal }) => {
     connectHeaders: { Authorization: `Bearer ${token}` },
     reconnectDelay: 3000,
     onConnect: () => {
-      console.log('[LoveConnect Call] WebSocket connected', uid);
+      console.log('[LoveConnect Call] WebSocket connected', { uid, apiOrigin: API_ORIGIN });
       client.subscribe(`/topic/signaling/${uid}`, (message) => {
         onSignal(JSON.parse(message.body));
       });
     },
     onStompError: (frame) => console.error('[LoveConnect Call] WebSocket STOMP error', frame.headers?.message || frame.body),
-    onWebSocketClose: () => console.warn('[LoveConnect Call] WebSocket closed')
+    onWebSocketError: (event) => console.error('[LoveConnect Call] WebSocket error', {
+      apiOrigin: API_ORIGIN,
+      type: event?.type
+    }),
+    onWebSocketClose: (event) => console.warn('[LoveConnect Call] WebSocket closed', {
+      apiOrigin: API_ORIGIN,
+      code: event?.code,
+      reason: event?.reason,
+      wasClean: event?.wasClean
+    })
   });
   client.activate();
   return client;
