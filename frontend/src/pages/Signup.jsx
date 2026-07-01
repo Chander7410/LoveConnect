@@ -10,6 +10,13 @@ const initialForm = {
   confirmPassword: ''
 };
 
+const retryDelays = [5000, 10000, 15000];
+const retryableStatuses = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+const wait = (delay) => new Promise((resolve) => window.setTimeout(resolve, delay));
+
+const shouldRetry = (error) => !error.response || retryableStatuses.has(error.response.status);
+
 export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
@@ -39,7 +46,21 @@ export default function Signup() {
     setToast({ type: '', message: '' });
     try {
       const payload = { ...form, email: form.email.trim().toLowerCase() };
-      const { data } = await api.post('/auth/register', payload);
+      let response;
+      for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+        try {
+          response = await api.post('/auth/register', payload, { timeout: 45000 });
+          break;
+        } catch (error) {
+          if (!shouldRetry(error) || attempt === retryDelays.length) throw error;
+          setToast({
+            type: 'info',
+            message: 'The signup server is starting. Your OTP request will retry automatically.'
+          });
+          await wait(retryDelays[attempt]);
+        }
+      }
+      const { data } = response;
       sessionStorage.setItem('loveconnect_pending_signup', JSON.stringify(payload));
       sessionStorage.setItem('loveconnect_signup_email', payload.email);
       navigate('/signup/verify-otp', {
@@ -49,7 +70,11 @@ export default function Signup() {
         }
       });
     } catch (err) {
-      setToast({ type: 'error', message: err.response?.data?.message || apiUnavailableMessage });
+      setToast({
+        type: 'error',
+        message: err.response?.data?.message
+          || `${apiUnavailableMessage} The free backend may still be starting; please try again in one minute.`
+      });
     } finally {
       setLoading(false);
     }
