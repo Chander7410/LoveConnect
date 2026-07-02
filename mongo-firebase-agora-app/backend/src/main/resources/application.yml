@@ -16,6 +16,9 @@ spring:
       mail:
         smtp:
           auth: ${SMTP_AUTH:true}
+          connectiontimeout: ${SMTP_CONNECTION_TIMEOUT:10000}
+          timeout: ${SMTP_TIMEOUT:10000}
+          writetimeout: ${SMTP_WRITE_TIMEOUT:10000}
           starttls:
             enable: ${SMTP_STARTTLS_ENABLE:true}
 
@@ -30,6 +33,8 @@ app:
     expiry: ${JWT_EXPIRY:86400}
   smtp:
     from-email: ${MAIL_FROM:supportloveconnect@gmail.com}
+  brevo:
+    api-key: ${BREVO_API_KEY:}
   sms:
     provider: ${SMS_PROVIDER:CONSOLE}
     api-key: ${SMS_API_KEY:}
