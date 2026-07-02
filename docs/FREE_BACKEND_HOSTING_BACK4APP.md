@@ -66,7 +66,7 @@ BREVO_SMTP_HOST=smtp-relay.brevo.com
 BREVO_SMTP_PORT=587
 BREVO_SMTP_USERNAME=your-brevo-smtp-login
 BREVO_SMTP_PASSWORD=your-brevo-smtp-key
-MAIL_FROM=supportloveconnect@gmail.com
+MAIL_FROM=chandershekhar78458@gmail.com
 APP_DEV_OTP_RESPONSE=false
 ```
 
