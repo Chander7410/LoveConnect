@@ -39,6 +39,11 @@ export default function AudioCallScreen() {
   const { activeCall, muted, remoteStream, toggleMute, endCall } = useCall();
   const remoteAudioRef = useRef(null);
   const elapsed = useCallTimer(activeCall);
+  const statusText = activeCall?.status === 'ACTIVE'
+    ? elapsed
+    : activeCall?.status === 'CONNECTING'
+      ? 'Connecting'
+      : 'Ringing';
 
   useEffect(() => {
     const remoteAudio = remoteAudioRef.current;
@@ -51,6 +56,8 @@ export default function AudioCallScreen() {
         audioTracks: remoteStream?.getAudioTracks().length || 0
       });
     }
+    remoteAudio.muted = false;
+    remoteAudio.volume = 1;
     if (!remoteStream) return;
     remoteAudio.play().catch((error) => console.log('[LoveConnect Call] remote audio play blocked', error.message));
   }, [remoteStream]);
@@ -62,7 +69,7 @@ export default function AudioCallScreen() {
       <span>Audio call</span>
       <strong>{activeCall.peer?.name || 'LoveConnect member'}</strong>
       <div className="call-meta">
-        <span><Clock size={15} /> {activeCall.status === 'ACTIVE' ? elapsed : 'Ringing'}</span>
+        <span><Clock size={15} /> {statusText}</span>
         <span><Volume2 size={15} /> {remoteStream?.getAudioTracks().length ? 'Audio connected' : 'Connecting audio'}</span>
       </div>
       <div className="webrtc-call-bar inline">

@@ -43,9 +43,15 @@ export default function VideoCallScreen() {
   const { activeCall, localStream, remoteStream, muted, cameraOff, toggleMute, toggleCamera, endCall } = useCall();
   const localRef = useRef(null);
   const remoteRef = useRef(null);
+  const remoteAudioRef = useRef(null);
   const renderedFrameRef = useRef(false);
   const [zoomed, setZoomed] = useState(false);
   const elapsed = useCallTimer(activeCall);
+  const statusText = activeCall?.status === 'ACTIVE'
+    ? elapsed
+    : activeCall?.status === 'CONNECTING'
+      ? 'Connecting'
+      : 'Ringing';
 
   useEffect(() => {
     if (localRef.current && localRef.current.srcObject !== localStream) {
@@ -113,14 +119,32 @@ export default function VideoCallScreen() {
     };
   }, [remoteStream]);
 
+  useEffect(() => {
+    const remoteAudio = remoteAudioRef.current;
+    if (!remoteAudio) return;
+    if (remoteAudio.srcObject !== remoteStream) {
+      remoteAudio.srcObject = remoteStream || null;
+      logCall('remote video-call audio srcObject assigned', {
+        hasStream: Boolean(remoteStream),
+        streamId: remoteStream?.id,
+        audioTracks: remoteStream?.getAudioTracks().length || 0
+      });
+    }
+    remoteAudio.muted = false;
+    remoteAudio.volume = 1;
+    if (!remoteStream) return;
+    remoteAudio.play().catch((error) => logCall('remote video-call audio play blocked', error.message));
+  }, [remoteStream]);
+
   if (!activeCall || activeCall.callType !== 'VIDEO') return null;
   return (
     <div className={`webrtc-call-screen video ${zoomed ? 'zoomed' : ''}`}>
-      <video ref={remoteRef} autoPlay playsInline muted={false} className="remote-video" />
+      <video ref={remoteRef} autoPlay playsInline muted className="remote-video" />
+      <audio ref={remoteAudioRef} autoPlay playsInline />
       <video ref={localRef} autoPlay muted playsInline className="local-video" />
       <div className="webrtc-call-bar">
         <strong>{activeCall.peer?.name || 'Video call'}</strong>
-        <span className="call-timer"><Clock size={15} /> {activeCall.status === 'ACTIVE' ? elapsed : 'Ringing'}</span>
+        <span className="call-timer"><Clock size={15} /> {statusText}</span>
         <button className="btn btn-light" type="button" onClick={() => setZoomed((value) => !value)}>
           {zoomed ? <Minimize2 /> : <Maximize2 />} {zoomed ? 'Normal' : 'Zoom'}
         </button>

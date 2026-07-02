@@ -45,6 +45,7 @@ export function CallProvider({ children }) {
   const pendingOffersRef = useRef(new Map());
   const pendingRemoteIceRef = useRef([]);
   const activeRef = useRef(null);
+  const remoteStreamRef = useRef(null);
   const callRequestRetryRef = useRef(null);
   const ringtoneRef = useRef(null);
   const ringingCallIdRef = useRef(null);
@@ -74,6 +75,8 @@ export function CallProvider({ children }) {
       stream?.getTracks().forEach((track) => track.stop());
       return null;
     });
+    remoteStreamRef.current?.getTracks().forEach((track) => track.stop());
+    remoteStreamRef.current = null;
     setRemoteStream(null);
     peerRef.current?.close();
     peerRef.current = null;
@@ -101,6 +104,32 @@ export function CallProvider({ children }) {
     ringtoneRef.current.play(callType);
   }, []);
 
+  const publishRemoteStream = useCallback(() => {
+    const stream = remoteStreamRef.current;
+    if (!stream) {
+      setRemoteStream(null);
+      return;
+    }
+    const snapshot = new MediaStream(stream.getTracks());
+    logCall('remote stream snapshot published', {
+      streamId: snapshot.id,
+      videoTracks: snapshot.getVideoTracks().map((track) => `${track.id}:${track.readyState}:${track.enabled}`),
+      audioTracks: snapshot.getAudioTracks().map((track) => `${track.id}:${track.readyState}:${track.enabled}`)
+    });
+    setRemoteStream(snapshot);
+  }, []);
+
+  const markCallConnected = useCallback((reason = '') => {
+    const current = activeRef.current;
+    if (!current || current.status === 'ACTIVE') return;
+    const active = { ...current, status: 'ACTIVE' };
+    activeRef.current = active;
+    setActiveCall(active);
+    stopRinging();
+    clearCallRequestRetry();
+    logCall('call marked active', reason);
+  }, [clearCallRequestRetry, stopRinging]);
+
   const ensurePeer = useCallback(async (receiverId) => {
     if (peerRef.current) return peerRef.current;
     const peer = await createPeer();
@@ -116,27 +145,47 @@ export function CallProvider({ children }) {
       }
     };
     peer.ontrack = (event) => {
-      const stream = event.streams?.[0] || new MediaStream([event.track]);
-      const videoTracks = stream.getVideoTracks();
-      const audioTracks = stream.getAudioTracks();
+      if (!remoteStreamRef.current) remoteStreamRef.current = new MediaStream();
+      const remoteStreamTarget = remoteStreamRef.current;
+      const incomingTracks = new Map();
+      if (event.track) incomingTracks.set(event.track.id, event.track);
+      (event.streams || []).forEach((stream) => {
+        stream.getTracks().forEach((track) => incomingTracks.set(track.id, track));
+      });
+      incomingTracks.forEach((track) => {
+        const exists = remoteStreamTarget.getTracks().some((currentTrack) => currentTrack.id === track.id);
+        if (!exists) {
+          remoteStreamTarget.addTrack(track);
+          track.onunmute = () => {
+            logCall('remote track unmuted', { kind: track.kind, id: track.id });
+            publishRemoteStream();
+            markCallConnected('remote-track-unmuted');
+          };
+          track.onended = () => {
+            logCall('remote track ended', { kind: track.kind, id: track.id });
+            publishRemoteStream();
+          };
+        }
+      });
+      const videoTracks = remoteStreamTarget.getVideoTracks();
+      const audioTracks = remoteStreamTarget.getAudioTracks();
       logCall('remote track received', {
         kind: event.track?.kind,
         id: event.track?.id,
         readyState: event.track?.readyState,
-        streamId: stream.id
+        incomingStreamIds: (event.streams || []).map((stream) => stream.id),
+        remoteStreamId: remoteStreamTarget.id
       });
       logCall('remote stream tracks count', {
-        streamId: stream.id,
+        streamId: remoteStreamTarget.id,
         videoTracks: videoTracks.length,
         audioTracks: audioTracks.length,
         videoTrackStates: videoTracks.map((track) => `${track.id}:${track.readyState}:${track.enabled}`),
         audioTrackStates: audioTracks.map((track) => `${track.id}:${track.readyState}:${track.enabled}`)
       });
-      logCall('remote stream received', stream);
-      setRemoteStream((currentStream) => {
-        if (currentStream?.id === stream.id) return currentStream;
-        return stream;
-      });
+      logCall('remote stream received', remoteStreamTarget);
+      publishRemoteStream();
+      markCallConnected('remote-track');
     };
     peer.onconnectionstatechange = () => {
       logCall('connection state change', peer.connectionState);
@@ -149,6 +198,7 @@ export function CallProvider({ children }) {
           enabled: receiver.track?.enabled
         }));
         logCall('connection connected remote receivers', receivers);
+        markCallConnected('peer-connected');
       }
       if (['failed', 'disconnected', 'closed'].includes(peer.connectionState)) {
         setError(peer.connectionState === 'failed' ? 'Call connection failed.' : '');
@@ -162,7 +212,7 @@ export function CallProvider({ children }) {
     };
     peerRef.current = peer;
     return peer;
-  }, [sendSignal]);
+  }, [markCallConnected, publishRemoteStream, sendSignal]);
 
   const openMedia = useCallback(async (callType) => {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -329,7 +379,7 @@ export function CallProvider({ children }) {
       peerUid: callToAccept.senderUid || '',
       peer: { id: callToAccept.senderId, name: callToAccept.senderName },
       direction: 'incoming',
-      status: 'ACTIVE'
+      status: 'CONNECTING'
     };
     activeRef.current = nextCall;
     setActiveCall(nextCall);
@@ -451,7 +501,7 @@ export function CallProvider({ children }) {
           callType: callWithUid.callType,
           payload: { description: peer.localDescription }
         });
-        const active = { ...callWithUid, status: 'ACTIVE' };
+        const active = { ...callWithUid, status: 'CONNECTING' };
         activeRef.current = active;
         setActiveCall(active);
         return;
@@ -466,7 +516,7 @@ export function CallProvider({ children }) {
         callType: callWithUid.callType,
         payload: { description: offer }
       });
-      const active = { ...callWithUid, status: 'ACTIVE' };
+      const active = { ...callWithUid, status: 'CONNECTING' };
       activeRef.current = active;
       setActiveCall(active);
       return;
@@ -497,7 +547,11 @@ export function CallProvider({ children }) {
       clearCallRequestRetry();
       if (activeRef.current) {
         stopRinging();
-        const active = { ...activeRef.current, peerUid: signal.senderUid || activeRef.current.peerUid, status: 'ACTIVE' };
+        const active = {
+          ...activeRef.current,
+          peerUid: signal.senderUid || activeRef.current.peerUid,
+          status: activeRef.current.status === 'ACTIVE' ? 'ACTIVE' : 'CONNECTING'
+        };
         activeRef.current = active;
         setActiveCall(active);
       }
