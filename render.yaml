@@ -25,7 +25,15 @@ services:
         sync: false
       - key: BREVO_SMTP_PASSWORD
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
       - key: MAIL_FROM
-        value: supportloveconnect@gmail.com
+        value: chandershekhar78458@gmail.com
+      - key: SMTP_CONNECTION_TIMEOUT
+        value: 10000
+      - key: SMTP_TIMEOUT
+        value: 10000
+      - key: SMTP_WRITE_TIMEOUT
+        value: 10000
       - key: APP_DEV_OTP_RESPONSE
         value: false
