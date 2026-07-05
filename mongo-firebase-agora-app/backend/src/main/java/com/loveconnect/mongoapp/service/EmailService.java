@@ -20,6 +20,8 @@ import org.springframework.web.client.RestTemplate;
 public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private static final String BREVO_SEND_EMAIL_URL = "https://api.brevo.com/v3/smtp/email";
+    private static final String CURRENT_FROM_EMAIL = "chandershekhar78458@gmail.com";
+    private static final String OLD_FROM_EMAIL = "supportloveconnect@gmail.com";
 
     private final JavaMailSender mailSender;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -34,7 +36,7 @@ public class EmailService {
                         @Value("${spring.mail.password:}") String smtpPassword,
                         @Value("${app.brevo.api-key:}") String brevoApiKey) {
         this.mailSender = mailSender;
-        this.fromEmail = fromEmail;
+        this.fromEmail = resolveFromEmail(fromEmail);
         this.smtpUsername = smtpUsername;
         this.smtpPassword = smtpPassword;
         this.brevoApiKey = brevoApiKey;
@@ -101,6 +103,17 @@ public class EmailService {
             Thanks,
             LoveConnect Team
             """.formatted(otp);
+    }
+
+    private String resolveFromEmail(String configuredFromEmail) {
+        if (!StringUtils.hasText(configuredFromEmail)) {
+            return CURRENT_FROM_EMAIL;
+        }
+        var normalized = configuredFromEmail.trim();
+        if (OLD_FROM_EMAIL.equalsIgnoreCase(normalized)) {
+            return CURRENT_FROM_EMAIL;
+        }
+        return normalized;
     }
 
     private String sanitizeMailError(Exception ex) {
