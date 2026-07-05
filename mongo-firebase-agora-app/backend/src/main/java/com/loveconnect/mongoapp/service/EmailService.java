@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
@@ -24,7 +25,7 @@ public class EmailService {
     private static final String OLD_FROM_EMAIL = "supportloveconnect@gmail.com";
 
     private final JavaMailSender mailSender;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final String fromEmail;
     private final String smtpUsername;
     private final String smtpPassword;
@@ -36,6 +37,7 @@ public class EmailService {
                         @Value("${spring.mail.password:}") String smtpPassword,
                         @Value("${app.brevo.api-key:}") String brevoApiKey) {
         this.mailSender = mailSender;
+        this.restTemplate = createRestTemplate();
         this.fromEmail = resolveFromEmail(fromEmail);
         this.smtpUsername = smtpUsername;
         this.smtpPassword = smtpPassword;
@@ -47,7 +49,7 @@ public class EmailService {
             throw new IllegalArgumentException("Email sender is not configured");
         }
         if (StringUtils.hasText(brevoApiKey)) {
-            sendWithBrevoApi(to, otp);
+            sendWithBrevoApi(to, otp, brevoApiKey);
             return;
         }
         if (!StringUtils.hasText(smtpUsername) || !StringUtils.hasText(smtpPassword)) {
@@ -67,14 +69,19 @@ public class EmailService {
         } catch (MailException ex) {
             log.warn("LoveConnect OTP email send failed. from={}, to={}, errorType={}, error={}",
                     fromEmail, to, ex.getClass().getSimpleName(), sanitizeMailError(ex));
+            if (StringUtils.hasText(smtpPassword)) {
+                log.warn("LoveConnect OTP SMTP failed; trying Brevo API with configured SMTP password as fallback.");
+                sendWithBrevoApi(to, otp, smtpPassword);
+                return;
+            }
             throw new IllegalArgumentException("Could not send OTP email. Please check SMTP settings.");
         }
     }
 
-    private void sendWithBrevoApi(String to, String otp) {
+    private void sendWithBrevoApi(String to, String otp, String apiKey) {
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("api-key", brevoApiKey);
+        headers.set("api-key", apiKey);
         var body = Map.of(
             "sender", Map.of("name", "LoveConnect", "email", fromEmail),
             "to", List.of(Map.of("email", to)),
@@ -114,6 +121,13 @@ public class EmailService {
             return CURRENT_FROM_EMAIL;
         }
         return normalized;
+    }
+
+    private RestTemplate createRestTemplate() {
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(10_000);
+        requestFactory.setReadTimeout(10_000);
+        return new RestTemplate(requestFactory);
     }
 
     private String sanitizeMailError(Exception ex) {
