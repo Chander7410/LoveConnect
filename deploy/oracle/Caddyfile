@@ -1,0 +1,13 @@
+{$APP_DOMAIN} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	handle /ws/* {
+		reverse_proxy backend:8080
+	}
+
+	respond "LoveConnect backend is running" 200
+}
