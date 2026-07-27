@@ -6,16 +6,32 @@ const normalizeApiUrl = (url) => {
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
 };
 
+const PRODUCTION_API_URL = 'https://loveconnect-mddv.onrender.com/api';
 const isLocalFrontend = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const isVercelFrontend = typeof window !== 'undefined' && window.location.hostname === 'love-connect-beta.vercel.app';
-const runtimeApiUrl = typeof window !== 'undefined' ? localStorage.getItem('loveconnect_api_url') : '';
+const getRuntimeApiUrl = () => {
+  if (typeof window === 'undefined') return '';
+  try {
+    const runtimeApiUrl = normalizeApiUrl(window.localStorage.getItem('loveconnect_api_url'));
+    if (!runtimeApiUrl) return '';
+
+    const isAllowedProductionOverride = runtimeApiUrl === normalizeApiUrl(import.meta.env.VITE_API_URL || PRODUCTION_API_URL);
+    if (isVercelFrontend && !isAllowedProductionOverride) {
+      window.localStorage.removeItem('loveconnect_api_url');
+      return '';
+    }
+    return runtimeApiUrl;
+  } catch {
+    return '';
+  }
+};
 const fallbackApiUrl = isLocalFrontend
   ? 'http://localhost:8080/api'
   : isVercelFrontend
-    ? ''
-    : '';
+    ? PRODUCTION_API_URL
+    : PRODUCTION_API_URL;
 
-export const API_BASE_URL = normalizeApiUrl(runtimeApiUrl || import.meta.env.VITE_API_URL || fallbackApiUrl);
+export const API_BASE_URL = normalizeApiUrl(getRuntimeApiUrl() || import.meta.env.VITE_API_URL || fallbackApiUrl);
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 export const apiUnavailableMessage = API_BASE_URL
   ? `Backend API is not reachable at ${API_BASE_URL}. Make sure the Spring Boot API is running and CORS allows this frontend domain.`
