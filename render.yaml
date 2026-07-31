@@ -2,6 +2,7 @@ services:
   - type: web
     name: loveconnect-backend
     runtime: docker
+    plan: free
     dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
     dockerContext: ./mongo-firebase-agora-app/backend
     envVars:
