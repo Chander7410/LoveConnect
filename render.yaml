@@ -7,6 +7,8 @@ services:
     envVars:
       - key: SERVER_PORT
         value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: monolith
       - key: MONGODB_URI
         sync: false
       - key: APP_CORS_ALLOWED_ORIGINS

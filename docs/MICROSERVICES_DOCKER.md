@@ -64,6 +64,20 @@ Health:
 curl http://localhost:8180/api/health
 ```
 
+## Production
+
+For Render production microservices, use:
+
+```text
+render.microservices.yaml
+```
+
+See:
+
+```text
+docs/PRODUCTION_MICROSERVICES_RENDER.md
+```
+
 ## Keep Existing Production Safe
 
 The existing Render/Vercel deployment can continue using the default monolith profile.

@@ -1,0 +1,141 @@
+services:
+  - type: pserv
+    name: loveconnect-auth-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
+    dockerContext: ./mongo-firebase-agora-app/backend
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: auth
+      - key: SERVER_PORT
+        value: 8080
+      - key: MONGODB_URI
+        sync: false
+      - key: APP_JWT_SECRET
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://love-connect-beta.vercel.app
+      - key: ALLOW_DEV_TOKENS
+        value: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SMTP_HOST
+        value: smtp-relay.brevo.com
+      - key: BREVO_SMTP_PORT
+        value: 587
+      - key: BREVO_SMTP_USERNAME
+        sync: false
+      - key: BREVO_SMTP_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        value: chandershekhar78458@gmail.com
+      - key: SMTP_CONNECTION_TIMEOUT
+        value: 10000
+      - key: SMTP_TIMEOUT
+        value: 10000
+      - key: SMTP_WRITE_TIMEOUT
+        value: 10000
+      - key: APP_DEV_OTP_RESPONSE
+        value: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+  - type: pserv
+    name: loveconnect-profile-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
+    dockerContext: ./mongo-firebase-agora-app/backend
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: profile
+      - key: SERVER_PORT
+        value: 8080
+      - key: MONGODB_URI
+        sync: false
+      - key: APP_JWT_SECRET
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://love-connect-beta.vercel.app
+      - key: ALLOW_DEV_TOKENS
+        value: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+
+  - type: pserv
+    name: loveconnect-chat-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
+    dockerContext: ./mongo-firebase-agora-app/backend
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: chat
+      - key: SERVER_PORT
+        value: 8080
+      - key: MONGODB_URI
+        sync: false
+      - key: APP_JWT_SECRET
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://love-connect-beta.vercel.app
+      - key: ALLOW_DEV_TOKENS
+        value: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+
+  - type: pserv
+    name: loveconnect-call-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
+    dockerContext: ./mongo-firebase-agora-app/backend
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: call
+      - key: SERVER_PORT
+        value: 8080
+      - key: MONGODB_URI
+        sync: false
+      - key: APP_JWT_SECRET
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://love-connect-beta.vercel.app
+      - key: ALLOW_DEV_TOKENS
+        value: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+
+  - type: web
+    name: loveconnect-api-gateway
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./deploy/render-gateway/Dockerfile
+    dockerContext: ./deploy/render-gateway
+    healthCheckPath: /api/health
+    envVars:
+      - key: AUTH_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: loveconnect-auth-service
+          property: hostport
+      - key: PROFILE_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: loveconnect-profile-service
+          property: hostport
+      - key: CHAT_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: loveconnect-chat-service
+          property: hostport
+      - key: CALL_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: loveconnect-call-service
+          property: hostport
