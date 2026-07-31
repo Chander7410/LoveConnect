@@ -41,10 +41,12 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile({"auth", "monolith"})
 public class AppAuthService {
     private final UserProfileRepository users;
     private final PasswordEncoder passwordEncoder;

@@ -6,6 +6,7 @@ import com.loveconnect.mongoapp.service.ProfileService;
 import com.loveconnect.mongoapp.service.SecurityContextService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/profiles")
+@Profile({"profile", "monolith"})
 public class ProfileController {
     private final SecurityContextService security;
     private final ProfileService profiles;

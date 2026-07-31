@@ -27,6 +27,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.security.SecureRandom;
 import java.util.Map;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
+@Profile({"auth", "monolith"})
 public class AuthController {
     private final SecurityContextService security;
     private final ProfileService profiles;

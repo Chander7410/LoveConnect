@@ -8,10 +8,12 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
+@Profile({"auth", "profile", "chat", "monolith"})
 public class ProfileService {
     private final UserProfileRepository userProfiles;
 

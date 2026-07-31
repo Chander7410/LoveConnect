@@ -18,9 +18,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile({"call", "monolith"})
 public class CallService {
     private final CallHistoryRepository calls;
     private final ChatMessageRepository messages;

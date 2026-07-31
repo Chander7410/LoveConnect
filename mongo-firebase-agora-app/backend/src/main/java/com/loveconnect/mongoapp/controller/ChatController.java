@@ -6,6 +6,7 @@ import com.loveconnect.mongoapp.service.ChatService;
 import com.loveconnect.mongoapp.service.SecurityContextService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/chats")
+@Profile({"chat", "monolith"})
 public class ChatController {
     private final SecurityContextService security;
     private final ChatService chats;

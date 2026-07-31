@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: loveconnect-mongo-firebase-agora
+  profiles:
+    default: monolith
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/loveconnect_mongo}

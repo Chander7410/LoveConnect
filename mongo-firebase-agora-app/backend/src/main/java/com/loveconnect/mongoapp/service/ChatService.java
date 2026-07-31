@@ -6,10 +6,12 @@ import com.loveconnect.mongoapp.repository.ChatMessageRepository;
 import com.loveconnect.mongoapp.security.FirebasePrincipal;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile({"chat", "monolith"})
 public class ChatService {
     private final ChatMessageRepository messages;
     private final SimpMessagingTemplate messagingTemplate;

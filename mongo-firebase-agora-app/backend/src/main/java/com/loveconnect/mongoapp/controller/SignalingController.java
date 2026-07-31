@@ -13,12 +13,14 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 @Controller
+@Profile({"call", "monolith"})
 public class SignalingController {
     private static final Logger log = LoggerFactory.getLogger(SignalingController.class);
     private final SimpMessagingTemplate messaging;
