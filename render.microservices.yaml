@@ -1,8 +1,8 @@
 services:
-  - type: pserv
+  - type: web
     name: loveconnect-auth-service
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
     dockerContext: ./mongo-firebase-agora-app/backend
     envVars:
@@ -45,10 +45,10 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
 
-  - type: pserv
+  - type: web
     name: loveconnect-profile-service
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
     dockerContext: ./mongo-firebase-agora-app/backend
     envVars:
@@ -67,10 +67,10 @@ services:
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
 
-  - type: pserv
+  - type: web
     name: loveconnect-chat-service
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
     dockerContext: ./mongo-firebase-agora-app/backend
     envVars:
@@ -89,10 +89,10 @@ services:
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
 
-  - type: pserv
+  - type: web
     name: loveconnect-call-service
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./mongo-firebase-agora-app/backend/Dockerfile
     dockerContext: ./mongo-firebase-agora-app/backend
     envVars:
@@ -114,28 +114,16 @@ services:
   - type: web
     name: loveconnect-api-gateway
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./deploy/render-gateway/Dockerfile
     dockerContext: ./deploy/render-gateway
     healthCheckPath: /api/health
     envVars:
-      - key: AUTH_SERVICE_HOSTPORT
-        fromService:
-          type: pserv
-          name: loveconnect-auth-service
-          property: hostport
-      - key: PROFILE_SERVICE_HOSTPORT
-        fromService:
-          type: pserv
-          name: loveconnect-profile-service
-          property: hostport
-      - key: CHAT_SERVICE_HOSTPORT
-        fromService:
-          type: pserv
-          name: loveconnect-chat-service
-          property: hostport
-      - key: CALL_SERVICE_HOSTPORT
-        fromService:
-          type: pserv
-          name: loveconnect-call-service
-          property: hostport
+      - key: AUTH_SERVICE_ORIGIN
+        value: https://loveconnect-auth-service.onrender.com
+      - key: PROFILE_SERVICE_ORIGIN
+        value: https://loveconnect-profile-service.onrender.com
+      - key: CHAT_SERVICE_ORIGIN
+        value: https://loveconnect-chat-service.onrender.com
+      - key: CALL_SERVICE_ORIGIN
+        value: https://loveconnect-call-service.onrender.com

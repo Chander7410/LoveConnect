@@ -1,6 +1,6 @@
 # LoveConnect Production Microservices On Render
 
-This is the production microservice path. The existing `render.yaml` keeps the current monolith safe. Use `render.microservices.yaml` only when you want the real separated-container deployment.
+This is the production microservice path. The existing `render.yaml` keeps the current monolith safe. Use `render.microservices.yaml` only when you want the separated-container deployment.
 
 ## Services
 
@@ -25,7 +25,7 @@ GOOGLE_CLIENT_ID=<Google OAuth client id, optional>
 GOOGLE_CLIENT_SECRET=<Google OAuth client secret, optional>
 ```
 
-Important: Render free instances can be slow and may block SMTP ports. Keep `BREVO_API_KEY` set so OTP emails use Brevo HTTPS API instead of SMTP.
+Important: this Blueprint uses Render `free` web services to avoid payment setup. Free services can be slow, sleep after inactivity, and share the monthly free-hour pool. Keep `BREVO_API_KEY` set so OTP emails use Brevo HTTPS API instead of SMTP.
 
 ## Render Deploy Steps
 
@@ -42,7 +42,7 @@ render.microservices.yaml
 6. Paste `BREVO_API_KEY` for `loveconnect-auth-service`.
 7. Deploy.
 
-After deploy, the public API gateway will be:
+After deploy, the public API gateway should be:
 
 ```text
 https://loveconnect-api-gateway.onrender.com/api
